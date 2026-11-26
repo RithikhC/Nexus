@@ -124,7 +124,7 @@ function framework() {
 
 /* ------------- Fig 3: the controller ----------------------------------- */
 function architecture() {
-  const w = 1500, h = 700;
+  const w = 1500, h = 880;
   let b = '';
   const txt = (x, y, t, o = {}) =>
     (b += `<text x="${x}" y="${y}" font-size="${o.size || 25}" font-weight="${o.weight || 400}" fill="${o.fill || INK}" text-anchor="${o.anchor || 'middle'}">${esc(t)}</text>`);
@@ -136,28 +136,50 @@ function architecture() {
   };
   const arr = (d, col) => (b += `<path d="${d}" fill="none" stroke="${col || INK}" stroke-width="3.6" marker-end="url(#a)"/>`);
 
-  box(40, 300, 290, 120, '#eef1f4', '#8f9aa5', 'Transformer', ['measured loading,', 'once a minute']);
-  arr('M330 360 H 392');
-  box(400, 285, 300, 150, '#eef4fa', BLUE, 'Available headroom', ['safe limit minus', 'everything else drawing', 'plus solar and storage']);
-  arr('M700 360 H 762');
-  box(770, 285, 300, 150, '#fdf5e6', AMBER, 'Priority queue', ['vehicles ranked by', 'how little slack they', 'have before departure']);
-  arr('M1070 360 H 1132');
-  box(1140, 300, 320, 120, '#e9f4ee', GREEN, 'Charge points', ['current limit set on', 'the IEC 61851 pilot']);
+  const PURPLE = '#6b4fa8';
 
-  // solar input
-  box(400, 70, 300, 120, '#fffaf0', AMBER, '☀ Solar canopy', ['PV with battery,', 'charged by day']);
-  arr('M550 190 V 278', AMBER);
+  /* ---- the advisory layer: slow, and a human closes it ---- */
+  box(40, 70, 290, 130, '#f4f1f9', '#a394c4', 'Evening history', ['what happened, night', 'by night']);
+  arr('M330 135 H 392', PURPLE);
+  box(400, 55, 300, 160, '#f4f1f9', PURPLE, 'AI analysis', ['ranks the options,', 'projects the effect,', 'states its confidence']);
+  arr('M700 135 H 762', PURPLE);
+  box(770, 55, 300, 160, '#fdeceb', '#c0564c', 'Human operator', ['approves or rejects', 'each option; nothing', 'applies until then']);
+  arr('M1070 135 H 1132', PURPLE);
+  box(1140, 70, 320, 130, '#e9f4ee', GREEN, 'Approved policy', ['the cap and enrolment', 'the controller holds']);
 
-  // driver inputs
-  box(770, 70, 300, 120, '#f7f7f7', '#9a9a9a', 'Each vehicle', ['charge level, energy', 'needed, departure time']);
-  arr('M920 190 V 278');
+  /* ---- the boundary between the two clocks ---- */
+  b += `<path d="M30 284 H 1470" stroke="#b9c4cf" stroke-width="2.5" stroke-dasharray="9 8" fill="none"/>`;
+  txt(48, 266, 'ADVISORY LAYER — human-approved', { size: 21, anchor: 'start', fill: PURPLE, weight: 700 });
+  txt(48, 320, 'PROTECTION LOOP — automatic', { size: 21, anchor: 'start', fill: BLUE, weight: 700 });
 
-  // feedback
-  b += `<path d="M1300 420 V 540 H 185 V 426" fill="none" stroke="${INK}" stroke-width="3.2" stroke-dasharray="11 7" marker-end="url(#a)"/>`;
-  txt(742, 572, 'the change in load is measured, and the loop repeats', { size: 24, fill: MUTED });
+  /* the approved policy is the only thing that crosses the boundary */
+  b += `<path d="M1300 200 V 230 H 700 V 536" fill="none" stroke="${GREEN}" stroke-width="3.6" marker-end="url(#ag)"/>`;
+
+  /* ---- the protection loop ---- */
+  box(770, 330, 300, 120, '#f7f7f7', '#9a9a9a', 'Each vehicle', ['charge level, energy', 'needed, departure time']);
+  arr('M920 450 V 538');
+
+  box(40, 560, 290, 120, '#eef1f4', '#8f9aa5', 'Transformer', ['measured loading,', 'once a minute']);
+  arr('M330 620 H 392');
+  box(400, 545, 300, 150, '#eef4fa', BLUE, 'Available headroom', ['the approved cap minus', 'everything else drawing,', 'plus solar and storage']);
+  arr('M700 620 H 762');
+  box(770, 545, 300, 150, '#fdf5e6', AMBER, 'Priority queue', ['vehicles ranked by', 'how little slack they', 'have before departure']);
+  arr('M1070 620 H 1132');
+  box(1140, 560, 320, 120, '#e9f4ee', GREEN, 'Charge points', ['current limit set on', 'the IEC 61851 pilot']);
+
+  // feedback within the fast loop
+  b += `<path d="M1300 680 V 790 H 185 V 686" fill="none" stroke="${INK}" stroke-width="3.2" stroke-dasharray="11 7" marker-end="url(#a)"/>`;
+  txt(742, 822, 'the change in load is measured, and the loop repeats', { size: 24, fill: MUTED });
+
+  // and the completed evening is what the advisory layer later reads
+  b += `<path d="M185 790 H 24 V 135 H 34" fill="none" stroke="${PURPLE}" stroke-width="3" stroke-dasharray="7 7" marker-end="url(#ap)"/>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${FONT}>
-<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${INK}"/></marker></defs>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${INK}"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${GREEN}"/></marker>
+<marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${PURPLE}"/></marker>
+</defs>
 <rect width="${w}" height="${h}" fill="#fff"/>${b}</svg>`;
 }
 

@@ -43,6 +43,8 @@ const REF_TEXT = {
   richardson: 'P. Richardson, D. Flynn and A. Keane, "Local versus centralized charging strategies for electric vehicles in low voltage distribution systems," IEEE Trans. Smart Grid, vol. 3, no. 2, pp. 1020–1028, Jun. 2012.',
   iec62196: 'Plugs, socket-outlets, vehicle connectors and vehicle inlets — conductive charging of electric vehicles, IEC 62196, International Electrotechnical Commission.',
   ocpp: 'Open Charge Alliance, Open Charge Point Protocol (OCPP) 1.6J and 2.0.1, Smart Charging profile. [Online]. Available: https://www.openchargealliance.org',
+  aiCharter: 'United Arab Emirates Government, "The UAE Charter for the Development and Use of Artificial Intelligence." [Online]. Available: https://u.ae/en/about-the-uae/strategies-initiatives-and-awards/policies/Ai',
+  dewaAI: 'Dubai Electricity and Water Authority, "DEWA deploys AI in energy distribution to enhance network efficiency and service reliability," July 2025. [Online]. Available: https://www.dewa.gov.ae',
 };
 const _refOrder = [];
 const C = (key) => {
@@ -313,6 +315,14 @@ const body = [
       'additional charge point consumes headroom so quickly. The street’s transformer is therefore exposed to ' +
       'whatever its customers happen to do simultaneously.'),
   ]),
+  p('One further instrument matters here, because the approach proposed below places a decision-support system ' +
+    'inside a utility workflow. The UAE Charter for the Development and Use of Artificial Intelligence sets out ' +
+    'human oversight as an explicit priority, emphasising "the irreplaceable value of human judgment and human ' +
+    'oversight over AI" as the means of correcting errors and biases, alongside priorities on transparency and on ' +
+    'governance and accountability ' + C('aiCharter') + '. A design in which an algorithm recommends and a named operator ' +
+    'decides is therefore not a concession to caution but the arrangement the national framework asks for. DEWA ' +
+    'has meanwhile deployed artificial intelligence in energy distribution to improve network efficiency and ' +
+    'service reliability ' + C('dewaAI') + ', so the institutional route for a tool of this kind already exists.'),
 
   h1('Proposed Approach'),
   h2('From a static limit to a dynamic one'),
@@ -338,7 +348,7 @@ const body = [
     'measuring locally rather than scheduling centrally, and it is consistent with findings that local control ' +
     'captures much of the benefit of central optimisation without its communication burden ' + C('richardson') + '.', { noIndent: true }),
   ...figure('fig3-architecture.png', 3.3,
-    'Fig. 3.  The controller. Measured headroom is shared among connected vehicles in order of urgency and applied as a current limit at each charge point, with an optional solar canopy and battery adding capacity.'),
+    'Fig. 3.  The two loops. Below the line the protection loop runs every minute and never waits for a decision: measured headroom is shared among connected vehicles in order of urgency and applied as a current limit at each charge point. Above it the advisory layer works across whole evenings, proposing ranked options that only take effect once an operator approves them. The approved policy is the sole path from one into the other.'),
   p('The headroom is then shared among connected vehicles. Priority is given to whichever vehicle has least slack — ' +
     'the smallest margin between the time remaining before its declared departure and the time it would need to ' +
     'finish charging at full power. Because that margin is recalculated continuously, a vehicle held back early in ' +
@@ -357,6 +367,33 @@ const body = [
   p('For a networked charge point the same instruction can instead be carried by OCPP, whose Smart Charging profile ' +
     'sets a limit in amperes or watts on an individual point ' + C('ocpp') + '. The routes are complementary — a local controller ' +
     'behind a domestic meter, OCPP for stations already managed centrally — and both end at the same control pilot.'),
+  h2('A decision layer, with a human holding the pen'),
+  p('Holding a feeder under its limit is necessary but not sufficient. A controller that quietly absorbs a worsening ' +
+    'problem every evening is also concealing it: the operator sees no alarm, the asset ages, and the first visible ' +
+    'sign is a failure. What the utility needs in addition is a judgement about what to do next — tighten the cap, ' +
+    'recruit the chargers still outside the scheme, or accept that this unit now warrants inspection and ' +
+    'reinforcement. Those are decisions about capital, customers and risk, and they are not the controller’s to ' +
+    'make.', { noIndent: true }),
+  p('We therefore separate the system into two loops running on different clocks, shown above and below the line in ' +
+    'Fig. 3. The protection loop is deterministic, acts every minute and never waits for authorisation, because a ' +
+    'transformer cannot be left overloaded while an operator is away from the desk. Above it sits an advisory layer ' +
+    'that touches no charger at all. It reads completed evenings, identifies the pattern — how often the limit was ' +
+    'approached, what share of the load was beyond the controller’s reach, whether the trend is worsening — and ' +
+    'presents the operator with a small set of ranked options. Each carries the reasoning behind it, a projected ' +
+    'effect, the cost and lead time, and the risk of taking it. Nothing is applied until a person approves it, and ' +
+    'an approval changes only the policy the protection loop then enforces.'),
+  p('Two properties make this more than a confirmation dialogue. The first is that the layer must be able to say ' +
+    'when an option will not help: if most of the excess is being drawn by chargers that have never been enrolled, ' +
+    'no cap can reach it, and saying so is more useful than proposing it. The second is that every projection is ' +
+    'recorded and later compared with what actually happened, so the operator can see whether this system has been ' +
+    'reliable before trusting its next suggestion — and the layer corrects its own estimates by that error. A ' +
+    'recommender that cannot be audited is of little use for a decision about an asset worth more than the ' +
+    'scheme that manages it.'),
+  p('This division also answers an objection that would otherwise be fatal. Automated control of a public network ' +
+    'raises an obvious question of who is accountable when it is wrong. Here the answer is unambiguous: the ' +
+    'automatic part is bounded, deterministic and does only what the standards already permit a charge point to be ' +
+    'told, while every discretionary judgement is logged against the person who made it.'),
+
   h2('Solar canopy and storage'),
   p('In the UAE the approach pairs naturally with photovoltaics. A shared canopy over residential or station parking ' +
     'generates through the day and, with a battery behind it, can discharge into the evening window when headroom is ' +
@@ -417,6 +454,14 @@ const body = [
     'need constraining alongside loading; and the economic case for a managed-connection category depends on local ' +
     'reinforcement costs we have not estimated. Future work begins with a load-flow study of a representative Dubai ' +
     'feeder and a hardware demonstration of the control pilot loop.', { noIndent: true }),
+  p('The advisory layer should be described accurately. As implemented it is a transparent recommender: it derives ' +
+    'its options and its projections from recorded operating history by stated rules, and the only sense in which ' +
+    'it currently learns is that it measures its own projection error and corrects later estimates by it. It is ' +
+    'not a trained statistical model, and we make no claim to have validated one. That choice is defensible for a ' +
+    'first system — an operator signing off work on an asset needs to see why a recommendation was made, and every ' +
+    'figure it displays is traceable to an observation — but a larger deployment, with many feeders and years of ' +
+    'history, is exactly the setting in which a learned model could propose options a rule set would not reach. ' +
+    'The division of responsibility would not change: the recommendation would still be a recommendation.'),
 
   h1('Conclusion'),
   p('Electric vehicle charging overloads distribution transformers because it is correlated, not because the energy ' +

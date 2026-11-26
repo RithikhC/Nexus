@@ -246,3 +246,105 @@ main { max-width: 1120px; margin: 0 auto; padding: 0 20px 64px; }
   .chain .arrow { width: auto; padding: 7px 0; flex-direction: row; gap: 8px; }
   .chain .arrow i { width: 26px; }
 }
+
+/* ------------------------------------------------- the advisory layer */
+/* Deliberately set apart from the controller panels: this is the slow loop,
+   and the human is in it. */
+.advisor { margin-bottom: 16px; border-color: #c9d9e6; }
+.advisor h2 .tag {
+  font-size: 11px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
+  color: var(--accent); background: #e8f4fa; border: 1px solid #c6e3f1;
+  border-radius: 999px; padding: 2px 9px; margin-left: 8px; vertical-align: 2px;
+}
+.advnote {
+  margin: 0 0 15px; font-size: 13px; line-height: 1.55; color: var(--muted);
+  background: var(--panel2); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 0 9px 9px 0; padding: 10px 13px;
+}
+.advnote b { color: var(--ink); }
+
+.advgrid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 2fr); gap: 16px; }
+.advcol h3 {
+  margin: 0 0 9px; font-size: 11px; font-weight: 650; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--dim);
+}
+
+.advfacts { display: flex; flex-direction: column; gap: 6px; }
+.advfacts div {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 8px;
+  padding: 7px 11px; font-size: 12.5px; color: var(--muted);
+}
+.advfacts b { font-size: 14px; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.advhead {
+  font-size: 13px; color: var(--muted); margin-bottom: 11px; line-height: 1.5;
+}
+.advhead b { color: var(--ink); }
+
+.advopt {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 11px;
+  padding: 12px 14px; margin-bottom: 9px;
+}
+.advopt .rank {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+  display: grid; place-items: center; margin-top: 1px;
+}
+.advopt .body { min-width: 0; flex: 1; }
+.advopt b { font-size: 14.5px; line-height: 1.35; display: block; }
+.advopt .why { margin: 5px 0 8px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.advopt .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.advopt .meta span {
+  font-size: 11.5px; color: var(--muted); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 7px; padding: 3px 8px;
+}
+.advopt .meta .proj { color: var(--accent); border-color: #c6e3f1; background: #eef7fc; font-weight: 600; }
+.advopt .meta .risk { color: #9a6a16; border-color: #ead9b4; background: #fdf6e7; }
+
+.advopt .acts { display: flex; gap: 7px; }
+.advopt button {
+  font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer;
+  border-radius: 8px; padding: 6px 15px; border: 1px solid transparent;
+  transition: filter .15s, background .15s;
+}
+.advopt button:hover { filter: brightness(.95); }
+.advopt .ok { background: var(--ok); color: #fff; }
+.advopt .no { background: var(--panel); color: var(--muted); border-color: var(--line); }
+
+.advnone {
+  margin: 0; font-size: 13px; color: var(--dim); background: var(--panel2);
+  border: 1px dashed var(--line); border-radius: 9px; padding: 14px 15px;
+}
+
+.advlog { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 13px; }
+.advlog h3 {
+  margin: 0 0 9px; font-size: 11px; font-weight: 650; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--dim);
+}
+.dl {
+  display: flex; gap: 10px; align-items: baseline; font-size: 12.5px;
+  color: var(--muted); padding: 5px 0; border-bottom: 1px solid #eef2f6;
+}
+.dl:last-child { border-bottom: 0; }
+.dl .v {
+  flex: 0 0 auto; font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; border-radius: 5px; padding: 2px 7px;
+}
+.dl.approved .v { background: #e4f5ec; color: var(--ok); }
+.dl.rejected .v { background: #f0f3f6; color: var(--dim); }
+.dl i { font-style: normal; color: var(--dim); }
+
+/* a car the controller is not allowed to touch */
+.queue .freerow td { color: var(--dim); }
+.nocontrol {
+  font-size: 10.5px; font-weight: 650; letter-spacing: .03em; text-transform: uppercase;
+  color: #9a6a16; background: #fdf6e7; border: 1px solid #ead9b4;
+  border-radius: 5px; padding: 2px 6px;
+}
+
+@media (max-width: 920px) {
+  .advgrid { grid-template-columns: 1fr; }
+}
+.advopt .meta .proj.weak { color: var(--dim); background: var(--panel2); border-color: var(--line); font-weight: 500; }

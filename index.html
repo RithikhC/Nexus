@@ -143,6 +143,32 @@
 
   </div>
 
+  <!-- ===================== the AI advisor ===================== -->
+  <section class="panel wide advisor" id="advisor">
+    <div class="ph">
+      <h2>AI advisor <span class="tag">recommends — you decide</span></h2>
+      <div class="state" id="advState">watching</div>
+    </div>
+
+    <p class="advnote"><b>This sits above the controller, not inside it.</b> Protection is automatic and never waits
+      for anyone — if the load crosses the limit the controller acts that minute. The advisor works on a slower
+      clock: it watches whole evenings, and when a pattern appears it puts options in front of a human with its
+      reasoning and a projection. <b>Nothing here changes until you approve it.</b></p>
+
+    <div class="advgrid">
+      <div class="advcol">
+        <h3>What it is reasoning from</h3>
+        <div class="advfacts" id="advFacts"></div>
+      </div>
+      <div class="advcol wide2">
+        <h3>What it recommends</h3>
+        <div id="advOpts"></div>
+      </div>
+    </div>
+
+    <div class="advlog" id="advLog" hidden></div>
+  </section>
+
   <!-- ===================== scoreboard ===================== -->
   <section class="scores">
     <div class="score"><div class="k">Worst load tonight</div><b id="sPeak">—</b><div class="n">over 100% damages the transformer</div></div>
@@ -182,6 +208,7 @@
 
 </main>
 
+<script src="js/advisor.js"></script>
 <script src="js/sim.js"></script>
 </body>
 </html>

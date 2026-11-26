@@ -35,6 +35,32 @@ The page shows the controller's own working rather than just its result: the lim
 it measured this minute, the live draw at each of the 24 charge points, and the ranked queue it allocated from —
 each car's battery level, departure time, energy still needed, urgency and the limit it was given.
 
+## The AI advisor — it recommends, you decide
+
+There are **two loops running on different clocks**, and the difference matters.
+
+The **protection loop** is the controller above. It is deterministic, acts every minute and never waits for
+anyone, because a transformer cannot be left overloaded while an operator is away from the desk.
+
+The **advisory layer** sits above it and touches no charger at all. It reads *completed evenings*, finds the
+pattern, and puts a small set of ranked options in front of a human — each with its reasoning, a projected
+effect, the cost and lead time, and the risk. **Nothing is applied until you press Approve.**
+
+Try it: run an evening with the controller on. Only 70% of the chargers are enrolled, so some cars charge outside
+the scheme and the cap cannot be guaranteed. The advisor notices, and offers three options:
+
+1. **Enrol the chargers not under control** — no capital cost, but needs customer consent
+2. **Hold a tighter 90% cap** — free and immediate, though it will say when this *cannot help much*
+3. **Log the unit for inspection and reinforcement** — the real fix, honest about doing nothing tonight
+
+Approve one and run another evening. The decision log then shows **what it projected against what actually
+happened** — and the advisor corrects its future estimates by that error.
+
+It is a transparent recommender, not a trained model: every number it shows is traceable to a recorded
+observation, which is what an operator needs in order to sign off work on an asset. That arrangement is also what
+the [UAE Charter for the Development and Use of AI](https://u.ae/en/about-the-uae/strategies-initiatives-and-awards/policies/Ai)
+asks for, listing human oversight among its priorities — "the irreplaceable value of human judgment".
+
 Solar generation and storage are discussed in the paper rather than the demo, so the demo stays on the one mechanism
 it is there to show.
 
@@ -65,7 +91,8 @@ replaced.
 ```
 index.html        the demo
 css/style.css     styling
-js/sim.js         the simulation and the control logic
+js/sim.js         the simulation and the protection loop
+js/advisor.js     the advisory layer: AI recommends, a human approves
 serve.js          tiny local server for development
 paper/            the research paper, figures and sources
 ```

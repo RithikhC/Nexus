@@ -88,7 +88,10 @@
 
     const perHomePeak = (CFG.txRating * 0.5) / CFG.homes;
     const house = CFG.homes * houseLoad(S.hour) * perHomePeak;
-    const headroom = LIMIT - house;
+    // The controller holds to whatever cap the operator has approved, which may
+    // be tighter than the safe limit. The safe limit itself never moves.
+    const capKW = CFG.txRating * (window.Advisor ? Advisor.policy().cap : CFG.safeLimit);
+    const headroom = capKW - house;
 
     const active = S.cars.filter((c) => S.hour >= c.arrive && S.hour < c.depart && c.soc < c.target);
     S.cars.forEach((c) => { c.power = 0; });
@@ -98,14 +101,21 @@
       active.forEach((c) => { c.power = CFG.chargerKW; });
       queue = active.map((c) => ({ c, need: (c.target - c.soc) * c.batt, left: Math.max(dt, c.depart - S.hour), laxity: 99 }));
     } else {
+      // Only enrolled chargers can be told anything. The rest draw what they
+      // like, and the controller has to work around them — which is exactly
+      // the situation the advisory layer exists to notice.
+      const free = active.filter((c) => !c.enrolled);
+      free.forEach((c) => { c.power = CFG.chargerKW; });
+      S.freeKW = free.length * CFG.chargerKW;
+
       // laxity: hours of slack between the time left and the time needed at full power
-      queue = active.map((c) => {
+      queue = active.filter((c) => c.enrolled).map((c) => {
         const need = (c.target - c.soc) * c.batt;
         const left = Math.max(dt, c.depart - S.hour);
         return { c, need, left, laxity: left - need / CFG.chargerKW };
       }).sort((a, b) => a.laxity - b.laxity);
 
-      let budget = Math.max(0, headroom);
+      let budget = Math.max(0, headroom - S.freeKW);
       for (const q of queue) {
         if (budget < CFG.minKW) break;
         // finish a little early rather than exactly on time, so a car builds slack
@@ -115,6 +125,11 @@
         const give = Math.min(ask, budget);
         if (give >= CFG.minKW) { q.c.power = give; budget -= give; }
       }
+      // the free-riders still belong in the queue view, marked as uncontrolled
+      queue = queue.concat(free.map((c) => ({
+        c, need: (c.target - c.soc) * c.batt,
+        left: Math.max(dt, c.depart - S.hour), laxity: 99, free: true,
+      })));
     }
 
     let carLoad = 0;
@@ -124,7 +139,12 @@
     });
 
     const net = house + carLoad;
-    if (net > S.peak) S.peak = net;
+    if (net > S.peak) {
+      S.peak = net;
+      // remember the make-up of the worst moment: the advisor reasons from it
+      S.peakFree = S.cars.reduce((s, c) => s + (c.power > 0 && !c.enrolled ? c.power : 0), 0);
+      S.peakHouse = house;
+    }
     if (net > LIMIT) S.overMin += CFG.stepMin;
 
     draw(house, carLoad, net, queue);
@@ -242,6 +262,16 @@
       return;
     }
     body.innerHTML = queue.slice(0, 8).map((q) => {
+      if (q.free) {
+        return `<tr class="freerow">
+          <td>#${q.c.id}</td>
+          <td>${Math.round(q.c.soc * 100)}%</td>
+          <td>${hhmm(q.c.depart)}</td>
+          <td>${Math.round(q.need)} kWh</td>
+          <td><span class="nocontrol">not enrolled</span></td>
+          <td>${q.c.power.toFixed(1)} kW</td>
+        </tr>`;
+      }
       // four pips, filled as slack runs out
       const pips = q.laxity > 6 ? 1 : q.laxity > 3 ? 2 : q.laxity > 1 ? 3 : 4;
       const hot = pips === 4 ? ' hot' : '';
@@ -271,6 +301,12 @@
   let timer = null;
   function reset() {
     S.hour = CFG.startHour; S.cars = buildCars(); S.peak = 0; S.overMin = 0;
+    S.peakFree = 0; S.peakHouse = 0; S.freeKW = 0;
+    // Enrolment is assigned deterministically by position, not drawn from the
+    // RNG, so the random sequence stays identical to paper/model.js.
+    const share = window.Advisor ? Advisor.policy().enrolled : 1;
+    const nEnrol = Math.round(S.cars.length * share);
+    S.cars.forEach((c, i) => { c.enrolled = i < nEnrol; });
     const perHomePeak = (CFG.txRating * 0.5) / CFG.homes;
     const h0 = CFG.homes * houseLoad(CFG.startHour) * perHomePeak;
     draw(h0, 0, h0, []);
@@ -297,6 +333,22 @@
       ready: S.cars.filter((c) => c.ready).length,
       total: S.cars.length,
     };
+    // Hand the evening to the advisory layer. It only ever sees finished
+    // evenings — it is not in the control path.
+    if (window.Advisor && S.mode === 'smart') {
+      Advisor.recordEvening({
+        mode: S.mode,
+        peakKW: S.peak,
+        peakPct: Math.round((S.peak / LIMIT) * 100),
+        overMin: S.overMin,
+        ready: S.cars.filter((c) => c.ready).length,
+        total: S.cars.length,
+        totalCars: S.cars.length,
+        managedCars: S.cars.filter((c) => c.enrolled).length,
+        unmanagedAtPeak: S.peakFree,
+        houseAtPeak: S.peakHouse,
+      });
+    }
     showCompare();
   }
   function showCompare() {
@@ -328,6 +380,7 @@
       wrap.appendChild(d);
     }
   })();
+  if (window.Advisor) Advisor.init(CFG, LIMIT);
   reset();
 
   el('play').addEventListener('click', play);
