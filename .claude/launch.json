@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "nexus", "runtimeExecutable": "node", "runtimeArgs": ["serve.js", "5180"], "port": 5180 }
+  ]
+}
