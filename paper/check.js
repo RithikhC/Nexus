@@ -102,7 +102,20 @@ function wrapLines(s, pt, colPt) {
   }
   const uncited = refNums.filter((n) => !citedInBody.has(n));
 
+  // IEEE requires references numbered in order of first citation. Walk the body
+  // and check first appearances run 1, 2, 3, ... with no gaps.
+  const firstSeen = [];
+  for (const m of bodyOnly.matchAll(/\[(\d+)\]/g)) {
+    const n = Number(m[1]);
+    if (!firstSeen.includes(n)) firstSeen.push(n);
+  }
+  const orderBad = firstSeen.filter((n, i) => n !== i + 1);
+  const orderMsg = orderBad.length
+    ? `WRONG - first-citation order is ${firstSeen.join(',')}`
+    : `ok (1..${firstSeen.length} in order)`;
+
   console.log(`words: ${words} | est. pages: ${pages.toFixed(1)} | figures: ${drawings} | table rows: ${tableRows}`);
   console.log(`stray markup: ${stray.length ? stray.join(', ') : 'none'}`);
   console.log(`refs: ${refNums.length} | uncited: ${uncited.length ? uncited.join(', ') : 'none'}`);
+  console.log(`citation order: ${orderMsg}`);
 })();

@@ -21,6 +21,36 @@ const p = (text, o = {}) => new Paragraph({
   children: Array.isArray(text) ? text : [t(text, o)],
 });
 
+/* References are keyed, not numbered. C('key') returns '[n]', numbering each
+ * source on its first use, so the list below comes out in IEEE citation order
+ * however the text is later rearranged. REFS is built from that order. */
+const REF_TEXT = {
+  gevo25: 'International Energy Agency, Global EV Outlook 2025. Paris: IEA, 2025. [Online]. Available: https://www.iea.org/reports/global-ev-outlook-2025',
+  uaePolicy: 'United Arab Emirates Government, "National Electric Vehicles Policy." [Online]. Available: https://u.ae/en/about-the-uae/strategies-initiatives-and-awards/policies/transport-and-infrastructure/national-electric-vehicles-policy',
+  moei: 'Ministry of Energy and Infrastructure, "Minister of Energy and Infrastructure outlines details of the National Electric Vehicles Policy," 13 July 2023. [Online]. Available: https://www.moei.gov.ae',
+  ieaV2G: 'International Energy Agency, "Vehicle-to-grid technology," Global EV Outlook 2026, IEA, Paris, 20 May 2026. [Online]. Available: https://www.iea.org/reports/vehicle-to-grid-technology',
+  dtu: '"Coincidence factors for domestic EV charging from driving and plug-in behaviour," Technical University of Denmark. [Online]. Available: https://orbit.dtu.dk',
+  pnnl: 'R. M. Pratt and L. E. Bernal, "Distribution System V1G PEV Charging Impacts Report," Pacific Northwest National Laboratory, Richland, WA, USA, Rep. PNNL-27206, Jan. 2018.',
+  mea: 'EA Technology, "My Electric Avenue: driving together for a cleaner future," Project Summary Report, Ofgem Low Carbon Networks Fund, 2015. [Online]. Available: https://eatechnology.com',
+  dewaStats: 'Dubai Electricity and Water Authority, Annual Statistics 2025. Dubai: DEWA, 2026. [Online]. Available: https://www.dewa.gov.ae',
+  barbosa: 'T. Barbosa et al., "Use of EV hosting capacity for management of low-voltage distribution systems," IET Generation, Transmission & Distribution, vol. 14, no. 14, 2020.',
+  touPilot: '"Achieving reliable coordination of residential plug-in electric vehicle charging: a pilot study," arXiv:2112.04559. [Online]. Available: https://arxiv.org/abs/2112.04559',
+  dewaTariff: 'Dubai Electricity and Water Authority, "EV charging — tariffs and EV Green Charger FAQ," implementing Cabinet Decision No. 81 of 2024, effective 30 September 2024. [Online]. Available: https://www.dewa.gov.ae/en/consumer/ev-community',
+  dewaSlab: 'Dubai Electricity and Water Authority, "Slab tariff." [Online]. Available: https://www.dewa.gov.ae/en/consumer/billing/slab-tariff',
+  dewaEVReg: 'Dubai Electricity and Water Authority, EV Charging Technical Regulations, Version 1. [Online]. Available: https://www.dewa.gov.ae',
+  iec61851: 'Electric vehicle conductive charging system — Part 1: General requirements, IEC 61851-1:2017, International Electrotechnical Commission, 2017.',
+  dewaInstall: 'Dubai Electricity and Water Authority, Regulations for Electrical Installations, 2017 edition. [Online]. Available: https://www.dewa.gov.ae',
+  richardson: 'P. Richardson, D. Flynn and A. Keane, "Local versus centralized charging strategies for electric vehicles in low voltage distribution systems," IEEE Trans. Smart Grid, vol. 3, no. 2, pp. 1020–1028, Jun. 2012.',
+  iec62196: 'Plugs, socket-outlets, vehicle connectors and vehicle inlets — conductive charging of electric vehicles, IEC 62196, International Electrotechnical Commission.',
+  ocpp: 'Open Charge Alliance, Open Charge Point Protocol (OCPP) 1.6J and 2.0.1, Smart Charging profile. [Online]. Available: https://www.openchargealliance.org',
+};
+const _refOrder = [];
+const C = (key) => {
+  if (!REF_TEXT[key]) throw new Error('unknown reference key: ' + key);
+  if (!_refOrder.includes(key)) _refOrder.push(key);
+  return `[${_refOrder.indexOf(key) + 1}]`;
+};
+
 let secNo = 0, subNo = 0, lastSec = 0;
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 const h1 = (text) => new Paragraph({
@@ -94,13 +124,15 @@ const ABSTRACT =
   'maximum power at the same moment. Electric vehicle charging weakens that assumption, because a home charger is ' +
   'comparable in size to the rest of a dwelling and because drivers plug in within the same few evening hours. The ' +
   'result is a local transformer carrying far more than it was sized for, with accelerated ageing and, eventually, ' +
-  'loss of supply to the street. This paper examines the problem in the context of the United Arab Emirates, where ' +
-  'national policy targets half the vehicle fleet electrified by 2050 and Dubai’s peak demand is already growing at ' +
-  'several per cent a year. It reviews the instruments that govern charging today — the National Electric Vehicles ' +
-  'Policy, Cabinet Decision No. 81 of 2024 on public charging tariffs, and DEWA’s technical and electrical ' +
-  'installation regulations — and identifies a specific gap: network capacity is protected by a static load ' +
-  'assessment made once before connection, and domestic charging sits behind the meter on a tariff banded by monthly ' +
-  'volume rather than by time of day, so no signal exists to spread it. We propose converting that static limit into ' +
+  'loss of supply to the street. The published thresholds are lower than intuition suggests: modelling for the US ' +
+  'Department of Energy puts distribution transformer limits as being exceeded at roughly 0.75 vehicles per home ' +
+  'at 6.6 kW charging, and a British network trial projected that 32% of low-voltage feeders would need ' +
+  'reinforcement once 40% to 70% of customers have electric vehicles. This paper examines the problem in the ' +
+  'context of the United Arab Emirates, where national policy targets half the vehicle fleet electrified by 2050. ' +
+  'It reviews the instruments governing charging today — the National Electric Vehicles Policy, Cabinet Decision ' +
+  'No. 81 of 2024, and DEWA’s technical and installation regulations — and identifies a specific gap: capacity is ' +
+  'protected by a static load assessment made once before connection, and domestic charging sits behind the meter ' +
+  'on a tariff banded by monthly volume rather than by time of day, so no signal exists to spread it. We propose converting that static limit into ' +
   'a dynamic one. A controller measures the headroom remaining at the transformer, allocates it among connected ' +
   'vehicles according to how little time each has before departure, and applies the result through the IEC 61851 ' +
   'control pilot, optionally supported by a shared solar canopy and battery. The approach lets existing assets host ' +
@@ -117,9 +149,9 @@ const body = [
 
   h1('Introduction'),
   p('Electric vehicles are arriving faster than the networks that must supply them. Global sales passed a fifth of all ' +
-    'new cars in 2024 and are projected above 40% by 2030 [1]. The United Arab Emirates has set out a National ' +
+    'new cars in 2024 and are projected above 40% by 2030 ' + C('gevo25') + '. The United Arab Emirates has set out a National ' +
     'Electric Vehicles Policy with the aim of half the vehicles on its roads being electric by 2050, alongside a ' +
-    'substantial reduction in transport energy use [2], [3].', { noIndent: true }),
+    'substantial reduction in transport energy use ' + C('uaePolicy') + ', ' + C('moei') + '.', { noIndent: true }),
   p('The difficulty is not generating the energy. It is that charging concentrates demand at the weakest point of the ' +
     'system — the low-voltage feeder serving a residential street — and concentrates it at the hour when that feeder ' +
     'is already busiest. This paper sets out why that happens, how large the problem is likely to become in the UAE, ' +
@@ -134,8 +166,10 @@ const body = [
     'rated far below its connected load has served residential streets reliably for decades, and it is assumed ' +
     'throughout network planning practice.', { noIndent: true }),
   h2('Charging weakens the assumption in two ways'),
-  p('First by size. A domestic charge point draws roughly as much as the rest of a dwelling combined, so adding one ' +
-    'is not a marginal change to a household’s demand but close to a doubling of its peak.', { noIndent: true }),
+  p('First by size. Residential charging can draw more power than any other single household load ' + C('ieaV2G') + ': a ' +
+    'domestic charge point draws roughly as much as the rest of a dwelling combined, so adding one is not a ' +
+    'marginal change to a household’s demand but close to a doubling of its peak. No appliance introduced to the ' +
+    'home in the last century has had that effect, and the network was not planned for it.', { noIndent: true }),
   p('Second, and more importantly, by correlation. Charging is not independent between households: people return from ' +
     'work within the same two or three hours and plug in on arrival, so chargers switch on together, and they do so ' +
     'precisely when cooking, lighting and air conditioning are already at their daily peak. Fig. 1 shows the shape of ' +
@@ -144,26 +178,48 @@ const body = [
   ...figure('fig1-mechanism.png', 3.3,
     'Fig. 1.  Why the evening is the difficulty. Charging arrives on top of the household peak rather than in the quiet hours, even though the energy could be delivered at any point overnight. Schematic.'),
   p('Measured coincidence factors for domestic charging do fall as fleets grow, because arrivals spread over several ' +
-    'hours [4]. That is reassuring for the system as a whole but not for the street, where charger power is high ' +
-    'enough that even a modest coincidence factor can exceed the diversity allowance an existing transformer was ' +
-    'sized against. Coincidence also rises sharply whenever arrivals or start times cluster.', { noIndent: true }),
+    'hours ' + C('dtu') + '. That is an average over a large population, and it is the wrong statistic for the problem at hand. ' +
+    'A transformer does not serve an average; it serves one street of perhaps twenty to forty homes, where the law ' +
+    'of large numbers is weak, charger power is high, and coincidence rises sharply whenever arrivals or start ' +
+    'times cluster. The system-wide figure can improve while individual feeders fail.', { noIndent: true }),
+
+  h2('The thresholds are far lower than intuition suggests'),
+  p('It is tempting to treat this as a problem for the 2040s, to be solved when electric vehicles are everywhere. ' +
+    'The published thresholds do not support that. Modelling of prototypical distribution feeders for the US ' +
+    'Department of Energy found that charging at 6.6 kW causes distribution transformer power limits to be exceeded ' +
+    'once adoption reaches about 0.75 vehicles per home — fewer than one car per household ' + C('pnnl') + '. The same study ' +
+    'found the threshold falls to roughly 0.25 vehicles per home at 19.2 kW charging, because feeder loading is ' +
+    'directly proportional to charging rate: faster chargers do not merely shift the problem forward, they multiply ' +
+    'it. Simulating each city’s measured charging behaviour on that feeder, the limit was exceeded during the ' +
+    'evening hours at about one vehicle per home for Seattle and 1.5 for Los Angeles.', { noIndent: true }),
+  p('The proportion of the network involved is not marginal either. My Electric Avenue, an Ofgem-funded trial that ' +
+    'ran clusters of neighbouring electric vehicles on real British low-voltage circuits, projected from its ' +
+    'results that 32% of low-voltage feeders — some 312,000 circuits — would require intervention once 40% to 70% ' +
+    'of customers have electric vehicles, at a reinforcement cost of around £2.2 billion to 2050 ' + C('mea') + '. That is ' +
+    'roughly a third of a mature national distribution network requiring physical work, driven by one new load.'),
+
   h2('What is coming, and at what scale'),
-  p('Dubai’s peak electricity demand reached 11,391 MW in 2025, about 5.8% above the previous year [5]. That growth ' +
+  p('Dubai’s peak electricity demand reached 11,391 MW in 2025, about 5.8% above the previous year ' + C('dewaStats') + '. That growth ' +
     'is being driven by population and economic activity, before significant electrification of transport. Against ' +
-    'this, national policy targets half the vehicle fleet electrified by 2050 [2]. If a substantial share of those ' +
+    'this, national policy targets half the vehicle fleet electrified by 2050 ' + C('uaePolicy') + '. If a substantial share of those ' +
     'vehicles charge at home, and if they charge on arrival, the additional demand does not spread itself evenly ' +
     'across the day: it lands in the evening window, on thousands of low-voltage feeders simultaneously.', { noIndent: true }),
-  p('The consequences differ by scale. Locally, sustained overloading is a thermal problem: insulation ageing ' +
-    'accelerates sharply with winding temperature, so repeated evening excursions shorten a transformer’s life long ' +
-    'before anything visible happens, and when protection finally operates the customers on that transformer lose ' +
-    'supply. Studies of residential networks report hosting capacity varying enormously between feeders, with a ' +
-    'meaningful fraction unable to accept any significant charging without a limit being violated [6].'),
+  p('The consequences differ by scale. Locally, sustained overloading is first a thermal problem and only later a ' +
+    'visible one: insulation ageing accelerates sharply with winding temperature, so repeated evening excursions ' +
+    'consume transformer life for months or years before anything is noticed, and the failure, when it comes, ' +
+    'arrives without warning and takes the whole street’s supply with it. The asset is degraded silently and the ' +
+    'cost is paid twice, once in shortened life and once in unplanned replacement. Hosting capacity also varies ' +
+    'enormously between feeders, so the constraint binds unevenly and unpredictably: a meaningful fraction of ' +
+    'residential networks cannot accept significant charging without a limit being violated ' + C('barbosa') + ', and the ' +
+    'utility generally cannot tell which feeders those are until something gives.'),
   p('At system scale the bar is higher. A power system holds reserve against the loss of its largest generating ' +
     'unit, and a sudden demand step is equivalent to such a loss — but ordinary arrivals produce a ramp, which ' +
     'generation follows comfortably. What produces a step is a common control signal reaching many vehicles at once: ' +
     'a shared off-peak tariff hour, a default start time distributed by an application, or restoration after an ' +
-    'outage. Studies of time-of-use tariffs report exactly this, the resulting synchronised peak rivalling the ' +
-    'uncontrolled one [7]. Both scales share one mechanism, coincidence, and differ only in what causes it.'),
+    'outage. The IEA notes that static time-of-use tariffs can lead many vehicles to charge at the same moment, ' +
+    'worsening grid impacts relative to leaving charging uncontrolled ' + C('ieaV2G') + ': an instrument meant to relieve the ' +
+    'network can damage it. Pilot measurements agree, the resulting synchronised peak rivalling the ' +
+    'uncontrolled one ' + C('touPilot') + '. Both scales share one mechanism, coincidence, and differ only in what causes it.'),
 
   h1('The Regulatory Framework in the UAE'),
   p('Charging in the UAE is already governed by a layered framework, and any practical proposal has to sit inside it. ' +
@@ -172,16 +228,16 @@ const body = [
   p('The UAE Cabinet approved the National Electric Vehicles Policy in 2023. It directs federal and local authorities ' +
     'and the private sector to build a national charging network, provides for a central database of charging ' +
     'stations, and sets the 2050 target of half the fleet electrified together with a large reduction in transport ' +
-    'energy use [2], [3]. Implementation includes UAEV, a joint venture between the Ministry of Energy and ' +
+    'energy use ' + C('uaePolicy') + ', ' + C('moei') + '. Implementation includes UAEV, a joint venture between the Ministry of Energy and ' +
     'Infrastructure and Etihad Water and Electricity, tasked with deploying chargers nationally.', { noIndent: true }),
   h2('Tariffs'),
   p('Public charging is priced under Cabinet Decision No. 81 of 2024. From 30 September 2024, registered users of ' +
     'DEWA’s EV Green Charger service pay AED 0.70 per kWh plus VAT for alternating-current charging and AED 1.20 per ' +
-    'kWh plus VAT for direct-current charging [8].', { noIndent: true }),
+    'kWh plus VAT for direct-current charging ' + C('dewaTariff') + '.', { noIndent: true }),
   p('Domestic charging is treated differently, and the difference matters. Electricity used to charge a vehicle at ' +
-    'home is added to the ordinary DEWA bill at standard residential rates [8]. Those rates are a slab tariff banded ' +
+    'home is added to the ordinary DEWA bill at standard residential rates ' + C('dewaTariff') + '. Those rates are a slab tariff banded ' +
     'by monthly consumption — AED 0.23 per kWh up to 2,000 kWh a month, rising through 0.28 and 0.32 to 0.38 above ' +
-    '6,000 kWh, with a fuel surcharge and VAT applied [9]. The bands depend on how much a household uses in a month, ' +
+    '6,000 kWh, with a fuel surcharge and VAT applied ' + C('dewaSlab') + '. The bands depend on how much a household uses in a month, ' +
     'not on when it uses it.'),
   p('The consequence is direct: in Dubai today there is no price signal that would move domestic charging off the ' +
     'evening peak. A household pays the same for a kilowatt-hour at 19:00 as at 03:00. The off-peak timer, which is ' +
@@ -190,47 +246,47 @@ const body = [
   h2('Technical and connection regulation'),
   p('DEWA’s EV Charging Technical Regulations require that charging installations follow the IET Code of Practice ' +
     'for electric vehicle charging equipment installation and BS 7671, with EV charge points also addressed in the ' +
-    'Dubai Building Code [10]. Any organisation or developer must obtain DEWA approval before establishing, ' +
+    'Dubai Building Code ' + C('dewaEVReg') + '. Any organisation or developer must obtain DEWA approval before establishing, ' +
     'installing, operating or maintaining a charging station. Equipment itself follows IEC 61851, the international ' +
     'standard for conductive charging, whose control pilot allows a charge point to advertise the maximum current a ' +
-    'vehicle may draw [11].', { noIndent: true }),
+    'vehicle may draw ' + C('iec61851') + '.', { noIndent: true }),
   p('Those equipment standards are worth stating precisely, because they set the envelope any controller must work ' +
     'inside. IEC 61851-1 defines the charging modes and the control pilot, the low-voltage signal by which a charge ' +
     'point tells a vehicle the maximum current it may draw. The pilot encodes that limit as a duty cycle: between 6 A ' +
     'and 51 A the available current is 0.6 times the duty cycle in per cent, and above that a second relation extends ' +
-    'the range to 80 A [11]. Two values matter for control. The ceiling is 80 A, and the floor is 6 A — below it the ' +
+    'the range to 80 A ' + C('iec61851') + '. Two values matter for control. The ceiling is 80 A, and the floor is 6 A — below it the ' +
     'pilot cannot express a limit at all, so a session must be paused rather than slowed further. Table II collects ' +
     'the limits that follow.', { noIndent: true }),
   ...table('Table II. Technical limits set by the standards',
     ['Layer', 'Standard', 'Limit'],
     [
-      ['Charging mode', 'IEC 61851-1 [11]', 'Mode 3 for dedicated AC\nequipment; Mode 4 for DC'],
-      ['Current signalling', 'IEC 61851-1\ncontrol pilot [11]', '6 A minimum, 80 A maximum;\n6–51 A as 0.6 × duty cycle'],
-      ['Connector', 'IEC 62196 [14]', 'Type 2 to 63 A; CCS for DC'],
+      ['Charging mode', 'IEC 61851-1 ' + C('iec61851') + '', 'Mode 3 for dedicated AC\nequipment; Mode 4 for DC'],
+      ['Current signalling', 'IEC 61851-1\ncontrol pilot ' + C('iec61851') + '', '6 A minimum, 80 A maximum;\n6–51 A as 0.6 × duty cycle'],
+      ['Connector', 'IEC 62196 ' + C('iec62196') + '', 'Type 2 to 63 A; CCS for DC'],
       ['Common ratings', 'from supply voltage', '7.4 kW at 230 V, 32 A;\n11 and 22 kW three-phase'],
-      ['Remote limit setting', 'OCPP 1.6J / 2.0.1\nSmart Charging [15]', 'charging profile in amperes\nor watts, set by the operator'],
+      ['Remote limit setting', 'OCPP 1.6J / 2.0.1\nSmart Charging ' + C('ocpp') + '', 'charging profile in amperes\nor watts, set by the operator'],
     ], 3.3),
   p('Network capacity is protected by DEWA’s Regulations for Electrical Installations. Technical details of an ' +
     'installation are submitted for review and prior approval before work begins, load distribution schedules are ' +
     'provided in prescribed formats, distribution boards are rated on total connected load before any demand factor ' +
     'is applied, and DEWA inspects and approves before supply is connected. Any extension or alteration requires ' +
-    'prior approval in the same way [12]. Home chargers sit behind the customer’s meter and are installed much as ' +
-    'any other appliance, with DEWA recommending approved contractors [10].'),
+    'prior approval in the same way ' + C('dewaInstall') + '. Home chargers sit behind the customer’s meter and are installed much as ' +
+    'any other appliance, with DEWA recommending approved contractors ' + C('dewaEVReg') + '.'),
   h2('What the framework leaves open'),
   p('Taken together, the instruments in Table I cover safety, equipment standards, approval of public infrastructure ' +
     'and the price of public charging thoroughly. Two things they do not do are the subject of this paper.', { noIndent: true }),
   ...table('Table I. Instruments in force, and what each does not address',
     ['Instrument', 'What it governs', 'What it leaves open'],
     [
-      ['National Electric Vehicles\nPolicy (2023) [2], [3]', 'National charger rollout,\ncentral station database,\n2050 fleet target',
+      ['National Electric Vehicles\nPolicy (2023) ' + C('uaePolicy') + ', ' + C('moei') + '', 'National charger rollout,\ncentral station database,\n2050 fleet target',
         'How simultaneous demand\nis managed on existing\nlow-voltage networks'],
-      ['Cabinet Decision No. 81\nof 2024 [8]', 'Public charging tariffs:\nAED 0.70/kWh AC,\nAED 1.20/kWh DC',
+      ['Cabinet Decision No. 81\nof 2024 ' + C('dewaTariff') + '', 'Public charging tariffs:\nAED 0.70/kWh AC,\nAED 1.20/kWh DC',
         'Applies to public charging;\nnot a time-of-day signal'],
-      ['DEWA slab tariff [9]', 'Residential energy price,\nbanded by monthly volume',
+      ['DEWA slab tariff ' + C('dewaSlab') + '', 'Residential energy price,\nbanded by monthly volume',
         'No time-of-use element, so\nno incentive to shift\ncharging off the peak'],
-      ['DEWA EV Charging\nTechnical Regulations [10]', 'Equipment standards, IET\nand BS 7671 compliance,\napproval of stations',
+      ['DEWA EV Charging\nTechnical Regulations ' + C('dewaEVReg') + '', 'Equipment standards, IET\nand BS 7671 compliance,\napproval of stations',
         'Does not require a station\nto respond to network\nconditions once running'],
-      ['DEWA Regulations for\nElectrical Installations [12]', 'Load schedules, prior\napproval, inspection before\nconnection',
+      ['DEWA Regulations for\nElectrical Installations ' + C('dewaInstall') + '', 'Load schedules, prior\napproval, inspection before\nconnection',
         'A one-time static\nassessment; capacity is\nnot re-evaluated in use'],
     ], 3.3),
   p([
@@ -280,7 +336,7 @@ const body = [
     'the headroom available. Because this quantity is measured rather than forecast, the controller cannot be wrong ' +
     'about it: it need not know why demand moved, only that it did. That robustness is the main argument for ' +
     'measuring locally rather than scheduling centrally, and it is consistent with findings that local control ' +
-    'captures much of the benefit of central optimisation without its communication burden [13].', { noIndent: true }),
+    'captures much of the benefit of central optimisation without its communication burden ' + C('richardson') + '.', { noIndent: true }),
   ...figure('fig3-architecture.png', 3.3,
     'Fig. 3.  The controller. Measured headroom is shared among connected vehicles in order of urgency and applied as a current limit at each charge point, with an optional solar canopy and battery adding capacity.'),
   p('The headroom is then shared among connected vehicles. Priority is given to whichever vehicle has least slack — ' +
@@ -291,7 +347,7 @@ const body = [
     'charging session either knows or can be told.', { noIndent: true }),
   h2('Enforcement'),
   p('Allocations are applied through the IEC 61851 control pilot, the signal every compliant charge point already ' +
-    'uses to tell a vehicle the maximum current it may draw [11]. Two properties make this the right mechanism. The ' +
+    'uses to tell a vehicle the maximum current it may draw ' + C('iec61851') + '. Two properties make this the right mechanism. The ' +
     'vehicle is obliged by the standard to respect the advertised limit, so enforcement does not depend on any ' +
     'higher-level protocol or on the vehicle cooperating with a cloud service. And the behaviour degrades safely: if ' +
     'the controller stops issuing instructions, the charge point simply reverts to its default limit. The 6 A floor ' +
@@ -299,7 +355,7 @@ const body = [
     'rather than throttled further, and the scheme therefore pauses sessions in reverse order of urgency rather than ' +
     'spreading an unusably thin allocation across all of them.', { noIndent: true }),
   p('For a networked charge point the same instruction can instead be carried by OCPP, whose Smart Charging profile ' +
-    'sets a limit in amperes or watts on an individual point [15]. The routes are complementary — a local controller ' +
+    'sets a limit in amperes or watts on an individual point ' + C('ocpp') + '. The routes are complementary — a local controller ' +
     'behind a domestic meter, OCPP for stations already managed centrally — and both end at the same control pilot.'),
   h2('Solar canopy and storage'),
   p('In the UAE the approach pairs naturally with photovoltaics. A shared canopy over residential or station parking ' +
@@ -320,7 +376,7 @@ const body = [
     'limits, so reinforcement can be planned where it is genuinely needed rather than discovered after a failure.'),
   p('Randomised and staggered starts. Where direct control is not available, requiring chargers to begin after a ' +
     'short random delay rather than on a shared signal costs nothing and removes the sharp synchronised step that a ' +
-    'common tariff hour or a shared application default would otherwise create [7].'),
+    'common tariff hour or a shared application default would otherwise create ' + C('touPilot') + '.'),
   p('A time-of-use element in the domestic tariff. Price alone cannot guarantee a limit is respected, and as ' +
     'Section II noted a single shared off-peak hour can make matters worse. A tariff with staggered or smoothly ' +
     'varying bands, however, would give households a reason to accept managed charging and would complement direct ' +
@@ -345,13 +401,12 @@ const body = [
     'because an overnight stop offers far more time than the charging requires. The wider system benefits because a ' +
     'population of managed chargers is by construction de-synchronised, removing the mechanism by which charging ' +
     'could present a step to the grid above.', { noIndent: true }),
-  p('This also speaks directly to UN Sustainable Development Goal 9 and its call for resilient infrastructure ' +
-    'upgraded for greater resource-use efficiency. Obtaining more transport electrification from distribution assets ' +
-    'that already exist is faster, cheaper and less carbon-intensive than replacing them, and the constraint being ' +
-    'removed is one that would otherwise slow EV adoption precisely in the dense residential areas where it matters ' +
-    'most.'),
-  p('An interactive demonstration of the mechanism accompanies this paper in the project repository. It is a ' +
-    'teaching model rather than a network study, offered to make the behaviour visible rather than to quantify it.'),
+  p('This speaks directly to UN Sustainable Development Goal 9 and its call for infrastructure upgraded for greater ' +
+    'resource-use efficiency. Getting more transport electrification from distribution assets that already exist is ' +
+    'faster, cheaper and less carbon-intensive than replacing them, and the constraint removed is one that would ' +
+    'otherwise slow adoption in exactly the dense residential areas where it matters most.'),
+  p('An interactive demonstration accompanies this paper in the project repository: a teaching model, offered to ' +
+    'make the behaviour visible rather than to quantify it.'),
 
   h1('Limitations and Future Work'),
   p('This paper argues from published sources and from the regulatory framework; it is not a validated network ' +
@@ -382,23 +437,9 @@ const body = [
     children: [t('References', { small: true })] }),
 ];
 
-const REFS = [
-  'International Energy Agency, Global EV Outlook 2025. Paris: IEA, 2025. [Online]. Available: https://www.iea.org/reports/global-ev-outlook-2025',
-  'United Arab Emirates Government, "National Electric Vehicles Policy." [Online]. Available: https://u.ae/en/about-the-uae/strategies-initiatives-and-awards/policies/transport-and-infrastructure/national-electric-vehicles-policy',
-  'Ministry of Energy and Infrastructure, "Minister of Energy and Infrastructure outlines details of the National Electric Vehicles Policy," 13 July 2023. [Online]. Available: https://www.moei.gov.ae',
-  '"Coincidence factors for domestic EV charging from driving and plug-in behaviour," Technical University of Denmark. [Online]. Available: https://orbit.dtu.dk',
-  'Dubai Electricity and Water Authority, Annual Statistics 2025. Dubai: DEWA, 2026. [Online]. Available: https://www.dewa.gov.ae',
-  'T. Barbosa et al., "Use of EV hosting capacity for management of low-voltage distribution systems," IET Generation, Transmission & Distribution, vol. 14, no. 14, 2020.',
-  '"Achieving reliable coordination of residential plug-in electric vehicle charging: a pilot study," arXiv:2112.04559. [Online]. Available: https://arxiv.org/abs/2112.04559',
-  'Dubai Electricity and Water Authority, "EV charging — tariffs and EV Green Charger FAQ," implementing Cabinet Decision No. 81 of 2024, effective 30 September 2024. [Online]. Available: https://www.dewa.gov.ae/en/consumer/ev-community',
-  'Dubai Electricity and Water Authority, "Slab tariff." [Online]. Available: https://www.dewa.gov.ae/en/consumer/billing/slab-tariff',
-  'Dubai Electricity and Water Authority, EV Charging Technical Regulations, Version 1. [Online]. Available: https://www.dewa.gov.ae',
-  'Electric vehicle conductive charging system — Part 1: General requirements, IEC 61851-1:2017, International Electrotechnical Commission, 2017.',
-  'Dubai Electricity and Water Authority, Regulations for Electrical Installations, 2017 edition. [Online]. Available: https://www.dewa.gov.ae',
-  'P. Richardson, D. Flynn and A. Keane, "Local versus centralized charging strategies for electric vehicles in low voltage distribution systems," IEEE Trans. Smart Grid, vol. 3, no. 2, pp. 1020–1028, Jun. 2012.',
-  'Plugs, socket-outlets, vehicle connectors and vehicle inlets — conductive charging of electric vehicles, IEC 62196, International Electrotechnical Commission.',
-  'Open Charge Alliance, Open Charge Point Protocol (OCPP) 1.6J and 2.0.1, Smart Charging profile. [Online]. Available: https://www.openchargealliance.org',
-];
+const REFS = _refOrder.map((k) => REF_TEXT[k]);
+{ const unused = Object.keys(REF_TEXT).filter((k) => !_refOrder.includes(k));
+  if (unused.length) throw new Error("reference never cited: " + unused.join(", ")); }
 
 const refParas = REFS.map((r, i) => new Paragraph({
   alignment: AlignmentType.JUSTIFIED, spacing: { after: 40, line: 240 },
