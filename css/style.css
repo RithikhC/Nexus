@@ -225,7 +225,7 @@ main { max-width: 1120px; margin: 0 auto; padding: 0 20px 64px; }
 .chain .what em { font-style: italic; }
 .chain .arrow {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 5px; padding: 0 9px; min-width: 92px;
+  gap: 5px; padding: 0 9px; width: 108px;
 }
 .chain .arrow i {
   display: block; width: 100%; height: 0; border-top: 1.5px dashed var(--line);
@@ -243,6 +243,6 @@ main { max-width: 1120px; margin: 0 auto; padding: 0 20px 64px; }
 
 @media (max-width: 920px) {
   .chain { grid-template-columns: 1fr; }
-  .chain .arrow { min-width: 0; padding: 7px 0; flex-direction: row; gap: 8px; }
+  .chain .arrow { width: auto; padding: 7px 0; flex-direction: row; gap: 8px; }
   .chain .arrow i { width: 26px; }
 }
