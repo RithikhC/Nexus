@@ -184,29 +184,49 @@ window.Advisor = (function () {
   }
 
   /* ------------------------------------------------------- apply/dismiss */
-  function approve(id) {
+  /* The operator picks ONE course of action. This mirrors how restoration
+     functions are already commissioned in utility ADMS platforms: the system
+     recommends, the operator chooses, and only then does anything happen. */
+  function apply(id) {
     const opt = (A.pending || []).find((o) => o.id === id);
     if (!opt) return;
     if (id === 'enrol') A.policy.enrolled = 1;
     if (id === 'cap90') A.policy.cap = 0.90;
     if (id === 'asset') A.policy.assetAction = 'inspection and reinforcement study logged';
+    // the options the operator passed over are recorded too: a decision is also
+    // a record of what was not done, and why it was available
+    for (const title of A.declined || []) {
+      A.decisions.push({ n: A.history.length, at: A.history.length, title, verdict: 'declined' });
+    }
+    A.declined = [];
+    for (const o of A.pending) {
+      if (o.id === id) continue;
+      A.decisions.push({ n: A.history.length, at: A.history.length, title: o.title, verdict: 'not-taken' });
+    }
     A.decisions.push({
       n: A.history.length, at: A.history.length, title: opt.title,
-      verdict: 'approved', projKW: opt.projKW, projLabel: opt.projLabel, actualKW: null,
+      verdict: 'applied', projKW: opt.projKW, projLabel: opt.projLabel, actualKW: null,
     });
     A.pending = null;
     render();
   }
 
-  function reject(id) {
-    const opt = (A.pending || []).find((o) => o.id === id);
+  /* Declining the leading option does not end the conversation: the next best
+     is promoted and put forward instead, which is how GE Vernova's D400-DA
+     behaves in Operator Assisted Mode. */
+  function decline(id) {
+    if (!A.pending) return;
+    const opt = A.pending.find((o) => o.id === id);
     if (!opt) return;
-    A.decisions.push({
-      n: A.history.length, at: A.history.length, title: opt.title,
-      verdict: 'rejected', projKW: null, projLabel: null, actualKW: null,
-    });
+    A.declined = (A.declined || []).concat(opt.title);
     A.pending = A.pending.filter((o) => o.id !== id);
-    if (!A.pending.length) A.pending = null;
+    if (!A.pending.length) {
+      for (const title of A.declined) {
+        A.decisions.push({ n: A.history.length, at: A.history.length, title, verdict: 'declined' });
+      }
+      A.declined = [];
+      A.pending = null;
+    }
     render();
   }
 
@@ -216,7 +236,7 @@ window.Advisor = (function () {
 
     // score any projection that was approved before this evening, and learn
     for (const d of A.decisions) {
-      if (d.verdict === 'approved' && d.actualKW === null && d.projKW && d.at < A.history.length) {
+      if (d.verdict === 'applied' && d.actualKW === null && d.projKW && d.at < A.history.length) {
         d.actualKW = rec.peakKW;
         A.calib.n += 1;
         A.calib.sum += rec.peakKW / d.projKW;   // >1 means we were optimistic
@@ -258,15 +278,15 @@ window.Advisor = (function () {
       const c = Math.round(confidence() * 100);
       const k = gainScale();
       box.innerHTML =
-        `<div class="advhead">The advisor recommends <b>${A.pending.length}</b> option${A.pending.length > 1 ? 's' : ''},
-           ranked. Confidence <b>${c}%</b> from ${f.seen} evening${f.seen > 1 ? 's' : ''} of data${
+        `<div class="advhead"><b>${A.pending.length}</b> course${A.pending.length > 1 ? 's' : ''} of action, ranked.
+           Confidence <b>${c}%</b> from ${f.seen} evening${f.seen > 1 ? 's' : ''} of data${
              A.calib.n ? `, projections corrected by ×${k.toFixed(2)} from ${A.calib.n} past call${A.calib.n > 1 ? 's' : ''}` : ''
-           }. <b>You decide.</b></div>` +
+           }. <b>Choose one.</b> Decline the leading option and the next is put forward instead.</div>` +
         A.pending.map((o, i) => `
-          <div class="advopt">
+          <div class="advopt${i === 0 ? ' lead' : ''}">
             <div class="rank">${i + 1}</div>
             <div class="body">
-              <b>${o.title}</b>
+              <b>${o.title}${i === 0 ? ' <span class="rec">recommended</span>' : ''}</b>
               <p class="why">${o.why}</p>
               <div class="meta">
                 <span class="proj${o.weak ? ' weak' : ''}">Projected: ${o.projLabel}</span>
@@ -274,8 +294,8 @@ window.Advisor = (function () {
                 <span class="risk">${o.risk}</span>
               </div>
               <div class="acts">
-                <button class="ok" data-approve="${o.id}">Approve</button>
-                <button class="no" data-reject="${o.id}">Reject</button>
+                <button class="ok" data-apply="${o.id}">Apply this one</button>
+                <button class="no" data-decline="${o.id}">Decline</button>
               </div>
             </div>
           </div>`).join('');
@@ -287,7 +307,7 @@ window.Advisor = (function () {
     log.hidden = false;
     log.innerHTML = '<h3>Decision log</h3>' + A.decisions.map((d) => {
       let outcome = '';
-      if (d.verdict === 'approved' && d.projKW) {
+      if (d.verdict === 'applied' && d.projKW) {
         const pp = Math.round((d.projKW / LIMIT) * 100);
         if (d.actualKW === null) {
           outcome = ` <i>projected ${pp}%, awaiting the next evening</i>`;
@@ -298,7 +318,7 @@ window.Advisor = (function () {
         }
       }
       return `<div class="dl ${d.verdict}">
-        <span class="v">${d.verdict}</span>
+        <span class="v">${d.verdict.replace('-', ' ')}</span>
         <span>after evening ${d.n} — ${d.title}${outcome}</span>
       </div>`;
     }).join('');
@@ -309,10 +329,10 @@ window.Advisor = (function () {
     CFG = cfg; LIMIT = limit; RATING = cfg.txRating;
     A.policy = defaultPolicy();
     document.addEventListener('click', (ev) => {
-      const a = ev.target.closest('[data-approve]');
-      const r = ev.target.closest('[data-reject]');
-      if (a) approve(a.dataset.approve);
-      if (r) reject(r.dataset.reject);
+      const a = ev.target.closest('[data-apply]');
+      const r = ev.target.closest('[data-decline]');
+      if (a) apply(a.dataset.apply);
+      if (r) decline(r.dataset.decline);
     });
     render();
   }
@@ -321,7 +341,7 @@ window.Advisor = (function () {
     init,
     recordEvening,
     policy: () => A.policy,
-    reset() { A.history = []; A.decisions = []; A.pending = null; A.policy = defaultPolicy(); A.calib = { n: 0, sum: 0 }; render(); },
+    reset() { A.history = []; A.decisions = []; A.pending = null; A.declined = []; A.policy = defaultPolicy(); A.calib = { n: 0, sum: 0 }; render(); },
     render,
   };
 })();

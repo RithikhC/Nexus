@@ -152,8 +152,15 @@
 
     <p class="advnote"><b>This sits above the controller, not inside it.</b> Protection is automatic and never waits
       for anyone — if the load crosses the limit the controller acts that minute. The advisor works on a slower
-      clock: it watches whole evenings, and when a pattern appears it puts options in front of a human with its
-      reasoning and a projection. <b>Nothing here changes until you approve it.</b></p>
+      clock: it watches whole evenings, and when a pattern appears it puts ranked courses of action in front of a
+      human. <b>You choose one; nothing happens until you do.</b></p>
+
+    <p class="advreal"><b>This is how utilities already run it.</b> Restoration functions in an ADMS are commissioned
+      the same way — GE Vernova's D400-DA, in <i>Operator Assisted Mode</i>, &ldquo;will first ask for confirmation from the
+      operator before taking any action. If the operator does not agree with the recommended action, the D400-DA will
+      calculate the next optimal scenario and propose that to the operator.&rdquo; Oracle's network management system has a
+      manual mode where &ldquo;restoration solutions are automatically generated but must be manually executed by the
+      operator.&rdquo; Utilities typically start in this mode and only move to automatic once confidence is earned.</p>
 
     <div class="advgrid">
       <div class="advcol">
@@ -167,6 +174,24 @@
     </div>
 
     <div class="advlog" id="advLog" hidden></div>
+
+    <div class="stack">
+      <h3>What carries each step, in a real network</h3>
+      <ol>
+        <li><b>Measurement in.</b> Transformer loading reaches the control centre over the usual telecontrol
+          protocols &mdash; <b>DNP3 (IEEE 1815)</b> in North America, <b>IEC 60870-5-104</b> in Europe and much of
+          Asia &mdash; from an RTU or gateway, with <b>IEC 61850</b> inside the substation itself.</li>
+        <li><b>Where this would live.</b> In the utility's <b>ADMS</b>, beside functions like FLISR, exchanging data
+          with metering and other systems through the <b>IEC 61968</b> Common Information Model. 61968 defines
+          application-level message interfaces; it is a separate layer from the telecontrol protocols above, not an
+          extension of them.</li>
+        <li><b>The decision.</b> Operator-assisted, as described above. Nothing is dispatched on the advisor's own
+          authority.</li>
+        <li><b>Command out.</b> The approved limit reaches a charge point as an <b>OCPP 1.6J / 2.0.1</b> charging
+          profile, and the charge point applies it on the <b>IEC 61851-1</b> control pilot &mdash; 6 A to 80 A, the
+          whole range the standard can express.</li>
+      </ol>
+    </div>
   </section>
 
   <!-- ===================== scoreboard ===================== -->
