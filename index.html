@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>What happens when a whole street charges at once?</title>
 <meta name="description" content="A live view of one neighbourhood transformer as electric cars charge, with and without a controller sharing the capacity.">
 <link rel="stylesheet" href="css/style.css">
@@ -54,6 +55,33 @@
     </div>
   </section>
 
+  <!-- ===================== the signal chain ===================== -->
+  <section class="chain" id="chain">
+    <div class="node">
+      <span class="where">1 · at the transformer</span>
+      <b id="n1">—</b>
+      <span class="what">a meter on the substation busbar reads the <em>whole</em> street's load</span>
+    </div>
+    <div class="arrow"><i></i><span>measurement</span></div>
+    <div class="node mid">
+      <span class="where">2 · the controller</span>
+      <b id="n2">—</b>
+      <span class="what">our software: takes the homes off the limit, shares what's left by urgency</span>
+    </div>
+    <div class="arrow"><i></i><span>a current limit, per charger</span></div>
+    <div class="node">
+      <span class="where">3 · at each charge point</span>
+      <b id="n3">—</b>
+      <span class="what">sent as an OCPP charging profile, applied on the IEC 61851 pilot</span>
+    </div>
+    <div class="arrow"><i></i><span>pilot signal</span></div>
+    <div class="node">
+      <span class="where">4 · in the car</span>
+      <b id="n4">—</b>
+      <span class="what">the standard obliges it to stay under the current it is offered</span>
+    </div>
+  </section>
+
   <div class="split">
 
     <!-- ===================== charge points ===================== -->
@@ -101,6 +129,10 @@
               <em id="s4">shared out, most urgent first</em></div>
           </div>
         </div>
+
+        <p class="std">The limit is sent over the <b>IEC 61851 control pilot</b> — the standard signal every charge
+          point already uses to tell a car its maximum current. It can ask for anything from <b>6 A</b> (1.4 kW) up to
+          <b>80 A</b>; below 6 A a session has to pause rather than slow down further.</p>
 
         <table class="queue">
           <thead><tr><th>Car</th><th>Battery</th><th>Leaves</th><th>Still needs</th><th>Urgency</th><th>Gets</th></tr></thead>

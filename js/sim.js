@@ -178,7 +178,45 @@
     }
 
     drawController(house, net, queue);
+    drawChain(house, net, queue);
     score();
+  }
+
+  /* The chain makes the link explicit: the controller measures at the
+     transformer but acts at the charge points, one current limit each. */
+  function drawChain(house, net, queue) {
+    const smart = S.mode === 'smart';
+    const amps = (kw) => Math.round((kw * 1000) / 230);   // 230 V single phase
+    const started = S.hour > CFG.startHour + 0.05;
+
+    el('chain').classList.toggle('live', smart && started);
+
+    el('n1').textContent = started
+      ? `${Math.round(net)} kW of ${CFG.txRating} kW`
+      : `${CFG.txRating} kW transformer`;
+
+    const free = Math.max(0, LIMIT - house);
+    el('n2').textContent = !started ? 'idle'
+      : smart ? `${Math.round(free)} kW to give out`
+      : 'not in the loop';
+
+    const live = queue.filter((q) => q.c.power > 0).map((q) => q.c.power);
+    if (!started || !queue.length) el('n3').textContent = 'nothing plugged in';
+    else if (!smart) el('n3').textContent = `${queue.length} points, all at ${amps(CFG.chargerKW)} A`;
+    else if (!live.length) el('n3').textContent = `${queue.length} points held at 0 A`;
+    else {
+      const lo = amps(Math.min(...live));
+      const hi = amps(Math.max(...live));
+      el('n3').textContent = lo === hi
+        ? `${queue.length} points set to ${hi} A`
+        : `${queue.length} points set, ${lo}–${hi} A`;
+    }
+
+    const paused = queue.length - live.length;
+    el('n4').textContent = !started ? 'cars arrive from 16:00'
+      : !queue.length ? 'none charging'
+      : paused > 0 ? `${live.length} drawing, ${paused} waiting`
+      : `${live.length} drawing their limit`;
   }
 
   function drawController(house, net, queue) {
@@ -191,7 +229,12 @@
       ? `${Math.round(LIMIT)} kW limit − ${Math.round(house)} kW homes = ${Math.round(Math.max(0, LIMIT - house))} kW to share`
       : `${Math.round(LIMIT)} kW limit, not being enforced`;
     el('s3').textContent = queue.length ? `${queue.length} cars plugged in and still charging` : 'no cars charging yet';
-    el('s4').textContent = smart ? 'each charger told its own limit over the control pilot' : 'every charger free to take 7.4 kW';
+    // the pilot can only express 6 A to 80 A, so a car that cannot be given 6 A is paused
+    const held = queue.filter((q) => q.c.power > 0 && q.c.power < CFG.chargerKW - 0.15).length;
+    const paused = queue.filter((q) => q.c.power === 0).length;
+    el('s4').textContent = smart
+      ? `${held} eased back, ${paused} paused — the pilot can only ask for 6 A to 32 A, never less`
+      : 'every charger free to take the full 32 A (7.4 kW)';
 
     const body = el('queue');
     if (!smart || !queue.length) {
