@@ -1,0 +1,353 @@
+/* Builds the NEXUS 3.0 presentation.
+ *   node build.js
+ * Eight minutes, ten slides. Structured: one theme, five layouts, sections.
+ */
+const path = require('path');
+const pptxgen = require('pptxgenjs');
+const { applyTheme } = require(path.join(
+  'C:/Users/Rajesh/AppData/Local/Claude-Data/claude_pzs8sxrjxfjjc/local-agent-mode-sessions/skills-plugin',
+  '3817d13e-523f-4956-91c6-644df67e4eed/93f51678-0fe8-453c-a805-a3a07e7aa74a/skills/pptx/scripts/apply_theme.js'
+));
+
+/* Heat and grid: deep slate carries the deck, terracotta is the sharp accent
+   (the climate argument), teal supports and matches the figures. */
+const THEME = {
+  name: 'Nexus EV',
+  headFontFace: 'Cambria',
+  bodyFontFace: 'Calibri',
+  colors: {
+    dk1: '1A2430',  // slate, body text
+    lt1: 'FFFFFF',
+    dk2: '55657A',  // muted text
+    lt2: 'F2F5F8',  // card fill
+    accent1: 'C2561E',  // terracotta
+    accent2: '14708F',  // teal
+    accent3: 'D9A441',  // amber
+    accent4: '2E7D52',  // green
+    accent5: '8C3B2E',
+    accent6: '3E5266',
+    hlink: '14708F',
+    folHlink: '55657A',
+  },
+};
+
+const FIGS = path.join(__dirname, '..', 'paper', 'figs');
+const ASSETS = path.join(__dirname, 'assets');
+
+const pres = new pptxgen();
+pres.layout = 'LAYOUT_16x9';          // 10" x 5.625"
+pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
+pres.author = 'Rithikh Chandran; Chrislyn Ann Ginu; Gollapalli Darshitha';
+pres.title = 'Intelligent EV Charging Management to Prevent Power Overloads';
+
+const C = pres.SchemeColor;
+const W = 10, H = 5.625, M = 0.55;
+
+/* ------------------------------------------------------------- layouts */
+pres.defineSlideMaster({
+  title: 'DARK',
+  background: { color: THEME.colors.dk1 },
+  objects: [
+    { placeholder: { text: '', options: { name: 'title', type: 'title', x: M, y: 1.45, w: W - 2 * M, h: 1.45,
+      fontSize: 38, bold: true, color: 'FFFFFF', align: 'left', valign: 'bottom' } } },
+    { placeholder: { text: '', options: { name: 'body', type: 'body', x: M, y: 3.05, w: W - 2 * M, h: 1.8,
+      fontSize: 15, color: 'C9D3DE', valign: 'top' } } },
+  ],
+});
+
+pres.defineSlideMaster({
+  title: 'CONTENT',
+  background: { color: C.background1 },
+  objects: [
+    { placeholder: { text: '', options: { name: 'title', type: 'title', x: M, y: 0.34, w: W - 2 * M, h: 0.7,
+      fontSize: 28, bold: true, color: C.text1, align: 'left', valign: 'middle' } } },
+    { placeholder: { text: '', options: { name: 'body', type: 'body', x: M, y: 1.18, w: 4.25, h: 3.3,
+      fontSize: 14, color: C.text2, valign: 'top' } } },
+    { text: { text: 'NEXUS 3.0  ·  Amity University Dubai × IEEE', options: {
+      x: M, y: H - 0.42, w: 5.5, h: 0.26, fontSize: 9, color: 'A7B2BF', isTextBox: true } } },
+  ],
+  slideNumber: { x: W - M - 0.32, y: H - 0.42, w: 0.32, h: 0.26, fontSize: 9, color: 'A7B2BF', align: 'right' },
+});
+
+pres.defineSlideMaster({
+  title: 'WIDE',
+  background: { color: C.background1 },
+  objects: [
+    { placeholder: { text: '', options: { name: 'title', type: 'title', x: M, y: 0.34, w: W - 2 * M, h: 0.7,
+      fontSize: 28, bold: true, color: C.text1, align: 'left', valign: 'middle' } } },
+    { text: { text: 'NEXUS 3.0  ·  Amity University Dubai × IEEE', options: {
+      x: M, y: H - 0.42, w: 5.5, h: 0.26, fontSize: 9, color: 'A7B2BF', isTextBox: true } } },
+  ],
+  slideNumber: { x: W - M - 0.32, y: H - 0.42, w: 0.32, h: 0.26, fontSize: 9, color: 'A7B2BF', align: 'right' },
+});
+
+/* ------------------------------------------------------------ helpers */
+// a numbered disc — the deck's one repeated motif
+function disc(s, n, x, y, d = 0.38, fill = THEME.colors.accent2) {
+  s.addShape(pres.ShapeType.ellipse, { x, y, w: d, h: d, fill: { color: fill }, objectName: `disc-${n}` });
+  s.addText(String(n), { x, y, w: d, h: d, fontSize: 13, bold: true, color: 'FFFFFF',
+    align: 'center', valign: 'middle', margin: 0, isTextBox: true });
+}
+
+function card(s, o) {
+  s.addShape(pres.ShapeType.roundRect, {
+    x: o.x, y: o.y, w: o.w, h: o.h, rectRadius: 0.06,
+    fill: { color: o.fill || THEME.colors.lt2 },
+    line: { color: o.line || 'E2E8EE', width: 1 },
+    objectName: o.name,
+  });
+}
+
+function stat(s, o) {
+  card(s, { x: o.x, y: o.y, w: o.w, h: o.h, name: o.name });
+  s.addText(o.big, { x: o.x + 0.18, y: o.y + 0.16, w: o.w - 0.36, h: 0.78,
+    fontSize: o.bigSize || 40, bold: true, color: o.color || THEME.colors.accent1,
+    align: 'left', valign: 'middle', margin: 0, isTextBox: true });
+  s.addText(o.label, { x: o.x + 0.18, y: o.y + 0.95, w: o.w - 0.36, h: o.h - 1.08,
+    fontSize: 12, color: C.text2, align: 'left', valign: 'top', margin: 0, isTextBox: true });
+}
+
+/* ================================================================ 1 */
+pres.addSection({ title: 'Opening' });
+{
+  const s = pres.addSlide({ masterName: 'DARK', sectionTitle: 'Opening' });
+  s.addText('Intelligent EV Charging\nManagement', { placeholder: 'title' });
+  s.addText([
+    { text: 'Preventing distribution transformer overload without replacing the transformer',
+      options: { fontSize: 16, color: 'E6ECF2', breakLine: true } },
+    { text: ' ', options: { fontSize: 10, breakLine: true } },
+    { text: 'Rithikh Chandran  ·  Chrislyn Ann Ginu  ·  Gollapalli Darshitha',
+      options: { fontSize: 13, color: '9FB0C0', breakLine: true } },
+    { text: 'NEXUS 3.0  ·  Amity University Dubai × IEEE Student Branch  ·  Track 01, SDG 9',
+      options: { fontSize: 12, color: '7D8EA0' } },
+  ], { placeholder: 'body' });
+  s.addNotes('Eight minutes. The claim: the grid can host far more EV charging than it is credited with, '
+    + 'if charging is coordinated. Nothing here needs a new standard or new hardware.');
+}
+
+/* ================================================================ 2 */
+pres.addSection({ title: 'The problem' });
+{
+  const s = pres.addSlide({ masterName: 'CONTENT', sectionTitle: 'The problem' });
+  s.addText('The grid is built on everyone being different', { placeholder: 'title' });
+  s.addText([
+    { text: 'A transformer is never sized to supply every home at once. It is sized on ',
+      options: { fontSize: 14, breakLine: false } },
+    { text: 'diversity', options: { fontSize: 14, bold: true, color: THEME.colors.accent2, breakLine: false } },
+    { text: ' — households peak at different moments.', options: { fontSize: 14, breakLine: true } },
+    { text: ' ', options: { fontSize: 9, breakLine: true } },
+    { text: 'A home charger draws about as much as the rest of the house combined, and everyone plugs in '
+          + 'when they get home.', options: { fontSize: 14, breakLine: true } },
+    { text: ' ', options: { fontSize: 9, breakLine: true } },
+    { text: 'Suddenly every home is doing the same thing at the same time.',
+      options: { fontSize: 14, bold: true, color: C.text1 } },
+  ], { placeholder: 'body' });
+  s.addImage({ path: path.join(FIGS, 'fig1-mechanism.png'), x: 4.95, y: 1.6, w: 4.6, h: 1.90 });
+  s.addText('The evening peak, with charging on top of it', {
+    x: 4.95, y: 3.58, w: 4.6, h: 0.26, fontSize: 10, italic: true, color: 'A7B2BF', isTextBox: true });
+  s.addNotes('The whole network is sized around the assumption that we do not all do the same thing at once. '
+    + 'Charging breaks that assumption twice over: by size, and by correlation.');
+}
+
+/* ================================================================ 3 */
+{
+  const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'The problem' });
+  s.addText('It breaks sooner than people expect', { placeholder: 'title' });
+  s.addText('Published thresholds, from measured and modelled studies — not from our simulation.', {
+    x: M, y: 1.08, w: W - 2 * M, h: 0.3, fontSize: 13, color: C.text2, isTextBox: true });
+
+  stat(s, { x: M, y: 1.55, w: 2.9, h: 2.45, name: 'stat-pnnl',
+    big: '0.75', label: 'vehicles per home is enough to exceed distribution transformer limits at 6.6 kW '
+      + 'charging — fewer than one car per household  (PNNL, US Dept. of Energy)' });
+  stat(s, { x: M + 3.05, y: 1.55, w: 2.9, h: 2.45, name: 'stat-mea', color: THEME.colors.accent2,
+    big: '32%', label: 'of Britain\u2019s low-voltage feeders — some 312,000 circuits — need intervention '
+      + 'at 40–70% EV uptake  (My Electric Avenue, Ofgem)' });
+  stat(s, { x: M + 6.10, y: 1.55, w: 2.9, h: 2.45, name: 'stat-cost', color: THEME.colors.accent6,
+    big: '£2.2bn', bigSize: 34, label: 'of reinforcement cost to 2050 on that same projection — the price of '
+      + 'solving this by digging up roads' });
+
+  s.addText('At 19.2 kW charging the first figure falls to 0.25 vehicles per home. Faster chargers do not '
+    + 'defer the problem — they multiply it.', {
+    x: M, y: 4.2, w: W - 2 * M, h: 0.5, fontSize: 14, italic: true, color: THEME.colors.accent1, isTextBox: true });
+  s.addNotes('These are other people\u2019s published numbers, not ours. The point is that the threshold is '
+    + 'below one car per household — this is not a 2040s problem.');
+}
+
+/* ================================================================ 4 */
+pres.addSection({ title: 'The gap' });
+{
+  const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'The gap' });
+  s.addText('What Dubai regulates today', { placeholder: 'title' });
+
+  const items = [
+    ['Approval', 'Public charging stations need DEWA approval before they are installed or operated, under the '
+      + 'EV Charging Technical Regulations.'],
+    ['Public tariff', 'Cabinet Decision No. 81 of 2024 sets AED 0.70 per kWh for AC and AED 1.20 for DC, '
+      + 'plus VAT.'],
+    ['Home charging', 'Sits behind the customer\u2019s meter on the ordinary slab tariff — banded by monthly '
+      + 'volume, not by time of day.'],
+  ];
+  items.forEach(([head, body], i) => {
+    const y = 1.25 + i * 1.18;
+    card(s, { x: M, y, w: W - 2 * M, h: 1.0, name: `reg-${i}` });
+    disc(s, i + 1, M + 0.22, y + 0.3);
+    s.addText(head, { x: M + 0.78, y: y + 0.13, w: 2.0, h: 0.32, fontSize: 15, bold: true,
+      color: C.text1, valign: 'top', margin: 0, isTextBox: true });
+    s.addText(body, { x: M + 0.78, y: y + 0.46, w: W - 2 * M - 1.1, h: 0.46, fontSize: 12.5,
+      color: C.text2, valign: 'top', margin: 0, isTextBox: true });
+  });
+  s.addNotes('The framework is comprehensive on equipment, approval and the price of public charging. '
+    + 'Note the third one: no time-of-day signal on domestic charging at all.');
+}
+
+/* ================================================================ 5 */
+{
+  const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'The gap' });
+  s.addText('But nothing governs the one thing that matters', { placeholder: 'title' });
+
+  const rows = [
+    ['The standards govern', 'what may be installed', THEME.colors.dk2],
+    ['The load assessment governs', 'what may be connected', THEME.colors.dk2],
+    ['Nothing governs', 'what is drawn at seven in the evening', THEME.colors.accent1],
+  ];
+  rows.forEach(([lead, tail, col], i) => {
+    const y = 1.35 + i * 0.82;
+    s.addText(lead, { x: M, y, w: 3.5, h: 0.5, fontSize: 17, color: C.text2,
+      align: 'right', valign: 'middle', margin: 0, isTextBox: true });
+    s.addText(tail, { x: M + 3.7, y, w: 5.2, h: 0.5, fontSize: i === 2 ? 22 : 19,
+      bold: i === 2, color: col, valign: 'middle', margin: 0, isTextBox: true });
+  });
+
+  card(s, { x: M, y: 3.95, w: W - 2 * M, h: 0.85, name: 'gapnote', fill: '2A3644', line: '2A3644' });
+  s.addText('A compliant 7.4 kW charger is entitled to its full 7.4 kW at the worst possible moment — and '
+    + 'the capacity check that approved it was made once, years ago, against a worst case that almost never happens.', {
+    x: M + 0.25, y: 4.05, w: W - 2 * M - 0.5, h: 0.65, fontSize: 13, color: 'E6ECF2',
+    valign: 'middle', margin: 0, isTextBox: true });
+  s.addNotes('This is the gap the project fills. Capacity is protected by a single static assessment, '
+    + 'and nothing responds once the street is running.');
+}
+
+/* ================================================================ 6 */
+pres.addSection({ title: 'The approach' });
+{
+  const s = pres.addSlide({ masterName: 'CONTENT', sectionTitle: 'The approach' });
+  s.addText('From a static limit to a dynamic one', { placeholder: 'title' });
+  s.addText([
+    { text: 'Instead of asking whether the network could supply every charger at full power at once…',
+      options: { fontSize: 14, breakLine: true } },
+    { text: ' ', options: { fontSize: 9, breakLine: true } },
+    { text: '…ask how much capacity is free right now, and guarantee the chargers never exceed it.',
+      options: { fontSize: 14, bold: true, color: C.text1, breakLine: true } },
+    { text: ' ', options: { fontSize: 9, breakLine: true } },
+    { text: 'A transformer that cannot accept ten unmanaged chargers may well accept thirty managed ones. '
+          + 'Reinforcement is deferred, and connections that would have been refused can be approved now.',
+      options: { fontSize: 14 } },
+  ], { placeholder: 'body' });
+  s.addImage({ path: path.join(FIGS, 'fig2-framework.png'), x: 5.05, y: 1.65, w: 4.4, h: 1.66 });
+  s.addText('Static assessment vs. a measured, enforced envelope', {
+    x: 5.05, y: 3.38, w: 4.4, h: 0.26, fontSize: 10, italic: true, color: 'A7B2BF', isTextBox: true });
+  s.addNotes('This is a known idea in network engineering — the flexible or managed connection. '
+    + 'What is new is applying it to domestic charging, where it currently does not exist.');
+}
+
+/* ================================================================ 7 */
+{
+  const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'The approach' });
+  s.addText('How the controller works', { placeholder: 'title' });
+
+  const steps = [
+    ['Measure', 'Loading read at the transformer, every minute. Measured, not forecast — so it cannot be wrong about it.'],
+    ['Subtract', 'Take the households off the safe limit. What is left is the headroom to share.'],
+    ['Rank', 'Order cars by least slack: time until departure minus time needed at full power.'],
+    ['Enforce', 'Set each charger a current limit on the IEC 61851 control pilot — 6 A to 80 A, the range the standard can express.'],
+  ];
+  steps.forEach(([head, body], i) => {
+    const x = M + i * 2.31;
+    card(s, { x, y: 1.3, w: 2.1, h: 2.5, name: `step-${i}` });
+    disc(s, i + 1, x + 0.22, 1.52);
+    s.addText(head, { x: x + 0.22, y: 2.0, w: 1.7, h: 0.3, fontSize: 15, bold: true,
+      color: C.text1, margin: 0, isTextBox: true });
+    s.addText(body, { x: x + 0.22, y: 2.34, w: 1.7, h: 1.3, fontSize: 11.5, color: C.text2,
+      valign: 'top', margin: 0, isTextBox: true });
+  });
+  s.addText('Below 6 A the pilot cannot express a limit at all — so a session is paused rather than throttled '
+    + 'further. For networked points the same instruction travels as an OCPP charging profile.', {
+    x: M, y: 4.0, w: W - 2 * M, h: 0.5, fontSize: 12.5, color: C.text2, isTextBox: true });
+  s.addNotes('The enforcement mechanism already exists in every compliant charge point. '
+    + 'And it degrades safely: lose the controller and the charger reverts to its default limit.');
+}
+
+/* ================================================================ 8 */
+pres.addSection({ title: 'The AI layer' });
+{
+  const s = pres.addSlide({ masterName: 'CONTENT', sectionTitle: 'The AI layer' });
+  s.addText('The AI advisor: it recommends, a human decides', { placeholder: 'title' });
+  s.addText([
+    { text: 'Two loops, two clocks.', options: { fontSize: 14, bold: true, color: C.text1, breakLine: true } },
+    { text: ' ', options: { fontSize: 9, breakLine: true } },
+    { text: 'Protection runs every minute and never waits for anyone — a transformer cannot be left overloaded '
+          + 'while an operator is away from the desk.', options: { fontSize: 14, breakLine: true } },
+    { text: ' ', options: { fontSize: 9, breakLine: true } },
+    { text: 'Above it, the advisor reads whole evenings and proposes ranked options: enrol more chargers, '
+          + 'tighten the cap, or schedule reinforcement. ', options: { fontSize: 14, breakLine: false } },
+    { text: 'Nothing applies until a person chooses one.',
+      options: { fontSize: 14, bold: true, color: THEME.colors.accent1 } },
+  ], { placeholder: 'body' });
+  s.addImage({ path: path.join(FIGS, 'fig3-architecture.png'), x: 5.05, y: 1.3, w: 4.4, h: 2.58 });
+  s.addText('This is how utility ADMS restoration already runs — GE Vernova\u2019s Operator Assisted Mode asks the '
+    + 'operator first, and proposes the next-best option if they decline. It also matches the UAE AI Charter\u2019s '
+    + 'human-oversight priority.', {
+    x: M, y: 4.35, w: W - 2 * M, h: 0.55, fontSize: 11.5, italic: true, color: C.text2, isTextBox: true });
+  s.addNotes('This is the part judges should remember. The AI does the analysis and states its confidence and '
+    + 'its projection; the human makes the call, and the projection is scored against what actually happened.');
+}
+
+/* ================================================================ 9 */
+pres.addSection({ title: 'Demonstration' });
+{
+  const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'Demonstration' });
+  s.addText('One street, one evening', { placeholder: 'title' });
+  s.addImage({ path: path.join(ASSETS, 'demo.png'), x: M, y: 1.25, w: 5.85, h: 2.46 });
+  s.addText('A moment from the uncontrolled run — 20:32, already over the limit', {
+    x: M, y: 3.78, w: 5.85, h: 0.26, fontSize: 10, italic: true, color: 'A7B2BF', isTextBox: true });
+
+  const nums = [
+    ['153%', 'worst of the evening, uncontrolled', THEME.colors.accent1],
+    ['87%', 'worst with the controller, never over', THEME.colors.accent4],
+    ['14 / 14', 'cars still full by morning', THEME.colors.accent2],
+  ];
+  nums.forEach(([big, label, col], i) => {
+    const y = 1.25 + i * 0.92;
+    s.addText(big, { x: 6.65, y, w: 2.85, h: 0.44, fontSize: 28, bold: true, color: col,
+      valign: 'top', margin: 0, isTextBox: true });
+    s.addText(label, { x: 6.65, y: y + 0.44, w: 2.85, h: 0.44, fontSize: 11.5, color: C.text2,
+      valign: 'top', margin: 0, isTextBox: true });
+  });
+  s.addText('Same cars, same energy, same night — only the timing changes.   rithikhc.github.io/Nexus', {
+    x: M, y: 4.45, w: W - 2 * M, h: 0.4, fontSize: 12, color: C.text2, isTextBox: true });
+  s.addNotes('A teaching model of one street on a Dubai summer evening, not a validated network study. '
+    + 'Live at the link — press play and it runs the evening in twenty seconds.');
+}
+
+/* =============================================================== 10 */
+pres.addSection({ title: 'Close' });
+{
+  const s = pres.addSlide({ masterName: 'DARK', sectionTitle: 'Close' });
+  s.addText('The capacity is already in the ground', { placeholder: 'title' });
+  s.addText([
+    { text: 'What is missing is the coordination to use it — and nothing in this approach needs a new '
+          + 'standard, a new interface, or a replaced transformer.', options: { fontSize: 15, breakLine: true } },
+    { text: ' ', options: { fontSize: 10, breakLine: true } },
+    { text: 'Honestly: this argues from published sources and the regulatory framework. It is not a validated '
+          + 'network study, and the advisor is a transparent recommender rather than a trained model.',
+      options: { fontSize: 12.5, color: '8C9BAB', italic: true } },
+  ], { placeholder: 'body' });
+  s.addNotes('Close on the contribution and the honest limit. Then take questions.');
+}
+
+(async () => {
+  const out = path.join(__dirname, 'NEXUS-3.0-presentation.pptx');
+  await pres.writeFile({ fileName: out });
+  await applyTheme(out, THEME);
+  console.log('wrote ' + out);
+})();

@@ -3,3 +3,7 @@ node_modules/
 *.log
 _new.docx
 *-latest.docx
+deck/node_modules/
+deck/render/
+deck/*.pdf
+deck/assets/demo.jpg
