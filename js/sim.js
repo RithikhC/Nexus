@@ -136,13 +136,9 @@
     const active = S.cars.filter((c) => S.hour >= c.arrive && S.hour < c.depart && c.soc < c.target);
     S.cars.forEach((c) => { c.power = 0; });
 
-    // the controller only ever sees what is left under the limit
-    let headroom = limit - house + pv;
-    if (S.solar && headroom < 0) {
-      fromStore = Math.min(-headroom, CFG.storeMaxKW, S.store / dt);
-      S.store -= fromStore * dt;
-      headroom += fromStore;
-    }
+    // the controller sees what is left under the limit, plus whatever the battery could give
+    const dischargeAvail = S.solar ? Math.min(CFG.storeMaxKW, S.store / dt) : 0;
+    const headroom = limit - house + pv + dischargeAvail;
 
     if (S.mode === 'none') {
       active.forEach((c) => { c.power = CFG.chargerKW; });
@@ -164,14 +160,6 @@
         const give = Math.min(ask, budget);
         if (give >= CFG.minKW) { q.c.power = give; budget -= give; }
       }
-      // if the battery can cover a shortfall, release a little more
-      if (S.solar && budget < CFG.minKW && S.store > 1) {
-        const extra = Math.min(CFG.storeMaxKW - fromStore, S.store / dt);
-        if (extra > CFG.minKW) {
-          const waiting = queue.find((q) => q.c.power === 0);
-          if (waiting) { waiting.c.power = Math.min(CFG.chargerKW, extra); S.store -= waiting.c.power * dt; fromStore += waiting.c.power; }
-        }
-      }
     }
 
     let carLoad = 0;
@@ -180,7 +168,14 @@
       if (c.soc >= c.target - 0.005) c.ready = true;
     });
 
-    const net = Math.max(0, house + carLoad - pv - fromStore);
+    // settle the battery against what the transformer would actually see
+    const gross = house + carLoad - pv;
+    if (dischargeAvail > 0 && gross > limit) {
+      fromStore = Math.min(gross - limit, dischargeAvail);
+      S.store -= fromStore * dt;
+    }
+
+    const net = Math.max(0, gross - fromStore);
     if (net > S.peak) S.peak = net;
     if (net > limit) S.overMin += CFG.stepMin;
 

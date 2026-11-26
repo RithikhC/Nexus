@@ -78,3 +78,17 @@ demand shape, plausible arrival and departure times and a plausible transformer 
 those assumptions. The comparison between controlled and uncontrolled charging is the meaningful output; the exact
 percentages are not measurements and a real feeder would differ. Assumptions and their basis are tabulated in the
 paper.
+
+## The paper
+
+[`paper/Intelligent-EV-Charging-Management.docx`](paper/Intelligent-EV-Charging-Management.docx) — IEEE format,
+5 pages, with the regulatory review and its sources.
+
+Rebuild it (needs `npm i docx sharp` inside `paper/`):
+
+```bash
+cd paper
+node figures.js    # the three conceptual figures
+node paper.js      # the .docx
+node model.js      # the street model behind the demo, as a console summary
+```
