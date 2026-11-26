@@ -1,36 +1,40 @@
-/* Neighbourhood EV charging simulation.
+/* One street, one transformer, one evening.
  *
- * One LV distribution transformer, 24 homes, an evening-to-morning run.
- * Three things the visitor can change:
- *    mode  = "none"  every car charges flat out the moment it plugs in
- *            "smart" the controller shares the measured headroom, most urgent car first
- *    solar = a shared PV canopy with a battery, charged during the day and
- *            discharged into the evening peak
+ * Two modes:
+ *   none  — every car draws its full rated power the moment it plugs in
+ *   smart — the controller measures the spare capacity under the transformer's
+ *           safe limit and shares it out, most urgent car first
  *
- * Everything is deterministic from a fixed seed, so the numbers on screen match
- * the ones in the paper.
+ * The controller panel shows its own working: the limit it is holding, the spare
+ * capacity it measured, and the ranked queue it allocated from.
+ *
+ * Deterministic from a fixed seed. paper/model.js is the Node twin of this file
+ * and draws its random values in the same order.
  */
 (function () {
   'use strict';
 
   const CFG = {
     homes: 24,
-    evShare: 0.6,           // matches the penetration used in the paper
-    txRating: 100,          // transformer nameplate [kW] for a street this size
-    safeLimit: 0.95,        // utilities plan against this, not nameplate
-    chargerKW: 7.4,
-    minKW: 1.4,             // 6 A at 230 V — below this a charger must stop, not slow
+    evShare: 0.6,          // the share of homes with a car, as used in the paper
+    txRating: 100,         // transformer nameplate [kW]
+    safeLimit: 0.95,       // utilities plan against this rather than nameplate
+    chargerKW: 7.4,        // a common single-phase home charger
+    minKW: 1.4,            // 6 A at 230 V: below this a session must pause, not slow
     battKWh: 60,
-    pvPeakKW: 40,           // shared solar canopy over the parking
-    storeKWh: 120,          // battery behind the canopy
-    storeMaxKW: 35,
     startHour: 16,
-    endHour: 32,            // 08:00 next day
-    stepMin: 2,             // simulated minutes per tick
+    endHour: 32,           // 08:00 the next morning
+    stepMin: 2,
     seed: 7,
   };
+  const LIMIT = CFG.txRating * CFG.safeLimit;
 
-  /* ------------------------------------------------------------- helpers */
+  const SHAPE = [
+    0.42, 0.38, 0.36, 0.35, 0.36, 0.40, 0.52, 0.64, 0.68, 0.64, 0.60, 0.58,
+    0.58, 0.58, 0.60, 0.66, 0.78, 0.92, 1.00, 0.98, 0.90, 0.78, 0.62, 0.50,
+  ];
+
+  /* ------------------------------------------------------------ helpers */
   function rng(seed) {
     let a = seed >>> 0;
     return () => {
@@ -41,40 +45,19 @@
     };
   }
   const clamp = (x, lo, hi) => (x < lo ? lo : x > hi ? hi : x);
+  const el = (id) => document.getElementById(id);
   const hhmm = (h) => {
-    const m = Math.round((h % 24) * 60);
+    const m = Math.round((((h % 24) + 24) % 24) * 60);
     return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
   };
-
-  // household demand through the day, normalised; evening peak around 19:00
-  const SHAPE = [
-    0.42, 0.38, 0.36, 0.35, 0.36, 0.40, 0.52, 0.64, 0.68, 0.64, 0.60, 0.58,
-    0.58, 0.58, 0.60, 0.66, 0.78, 0.92, 1.00, 0.98, 0.90, 0.78, 0.62, 0.50,
-  ];
   function houseLoad(hour) {
     const h = ((hour % 24) + 24) % 24;
     const i = Math.floor(h), j = (i + 1) % 24, f = h - i;
     return SHAPE[i] * (1 - f) + SHAPE[j] * f;
   }
-  // clear-sky PV through a Dubai day, zero before 06:00 and after 18:30
-  function solarFactor(hour) {
-    const h = ((hour % 24) + 24) % 24;
-    if (h < 6 || h > 18.5) return 0;
-    return Math.pow(Math.sin((Math.PI * (h - 6)) / 12.5), 1.35);
-  }
 
-  /* --------------------------------------------------------------- state */
-  const S = {
-    mode: 'none',
-    solar: false,
-    running: false,
-    hour: CFG.startHour,
-    cars: [],
-    peak: 0,
-    overMin: 0,
-    store: 0,
-    results: {},       // keyed "none" / "smart" / "none+solar" / "smart+solar"
-  };
+  /* -------------------------------------------------------------- state */
+  const S = { mode: 'none', running: false, hour: CFG.startHour, cars: [], peak: 0, overMin: 0, results: {} };
 
   function buildCars() {
     const r = rng(CFG.seed);
@@ -82,69 +65,41 @@
     const out = [];
     for (let i = 0; i < n; i++) {
       const arrive = 17 + 2.0 * (r() + r() - 1);
-      const depart = 31.5 + 1.2 * (r() + r() - 1);     // 07:30 next day, ±
+      const depart = 31.5 + 1.2 * (r() + r() - 1);
       const soc = 0.25 + 0.4 * r();
       const target = 0.85 + 0.1 * r();
       out.push({
-        home: i, arrive, depart,
+        id: i + 1, home: i, arrive, depart, soc, target,
         batt: CFG.battKWh * (0.8 + 0.4 * r()),
-        soc, startSoc: soc, target,
         power: 0, ready: false,
       });
     }
-    // spread the cars across the street rather than filling the first N houses
+    // scatter the cars across the street instead of filling the first N homes
     const homes = [...Array(CFG.homes).keys()];
     for (let i = homes.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [homes[i], homes[j]] = [homes[j], homes[i]]; }
     out.forEach((c, i) => { c.home = homes[i]; });
     return out;
   }
 
-  function reset() {
-    S.hour = CFG.startHour;
-    S.cars = buildCars();
-    S.peak = 0;
-    S.overMin = 0;
-    S.store = CFG.storeKWh;      // the battery filled up during the day
-    // show the street as it actually is at 16:00 rather than an empty bar
-    const perHomePeak = (CFG.txRating * 0.5) / CFG.homes;
-    const house0 = CFG.homes * houseLoad(CFG.startHour) * perHomePeak;
-    render(house0, 0, house0);
-    scores(null);
-    el('alarm').classList.remove('show');
-  }
-
-  /* ----------------------------------------------------------- one tick */
+  /* ------------------------------------------------------------ one tick */
   function step() {
     const dt = CFG.stepMin / 60;
     S.hour += dt;
 
     const perHomePeak = (CFG.txRating * 0.5) / CFG.homes;
     const house = CFG.homes * houseLoad(S.hour) * perHomePeak;
-    const limit = CFG.txRating * CFG.safeLimit;
-
-    // --- solar canopy and its battery
-    let pv = 0, fromStore = 0;
-    if (S.solar) {
-      pv = CFG.pvPeakKW * solarFactor(S.hour);
-      const surplus = Math.max(0, pv - 2);                       // a little goes to the canopy's own services
-      const room = (CFG.storeKWh - S.store) / dt;
-      const toStore = Math.min(surplus, room, CFG.storeMaxKW);
-      S.store += toStore * dt;
-      pv -= toStore;
-    }
+    const headroom = LIMIT - house;
 
     const active = S.cars.filter((c) => S.hour >= c.arrive && S.hour < c.depart && c.soc < c.target);
     S.cars.forEach((c) => { c.power = 0; });
 
-    // the controller sees what is left under the limit, plus whatever the battery could give
-    const dischargeAvail = S.solar ? Math.min(CFG.storeMaxKW, S.store / dt) : 0;
-    const headroom = limit - house + pv + dischargeAvail;
-
+    let queue = [];
     if (S.mode === 'none') {
       active.forEach((c) => { c.power = CFG.chargerKW; });
+      queue = active.map((c) => ({ c, need: (c.target - c.soc) * c.batt, left: Math.max(dt, c.depart - S.hour), laxity: 99 }));
     } else {
-      // most urgent first: laxity is the slack between time left and time needed
-      const queue = active.map((c) => {
+      // laxity: hours of slack between the time left and the time needed at full power
+      queue = active.map((c) => {
         const need = (c.target - c.soc) * c.batt;
         const left = Math.max(dt, c.depart - S.hour);
         return { c, need, left, laxity: left - need / CFG.chargerKW };
@@ -153,8 +108,8 @@
       let budget = Math.max(0, headroom);
       for (const q of queue) {
         if (budget < CFG.minKW) break;
-        // aim to finish a little early rather than exactly on time, so a car builds
-        // slack whenever the network has room to spare and is not caught out later
+        // finish a little early rather than exactly on time, so a car builds slack
+        // whenever the network has room to spare
         const justInTime = (q.need / q.left) * 1.25;
         const ask = q.laxity <= 0 ? CFG.chargerKW : clamp(justInTime, CFG.minKW, CFG.chargerKW);
         const give = Math.min(ask, budget);
@@ -168,72 +123,102 @@
       if (c.soc >= c.target - 0.005) c.ready = true;
     });
 
-    // settle the battery against what the transformer would actually see
-    const gross = house + carLoad - pv;
-    if (dischargeAvail > 0 && gross > limit) {
-      fromStore = Math.min(gross - limit, dischargeAvail);
-      S.store -= fromStore * dt;
-    }
-
-    const net = Math.max(0, gross - fromStore);
+    const net = house + carLoad;
     if (net > S.peak) S.peak = net;
-    if (net > limit) S.overMin += CFG.stepMin;
+    if (net > LIMIT) S.overMin += CFG.stepMin;
 
-    render(house - Math.min(house, pv + fromStore), carLoad, net);
-
+    draw(house, carLoad, net, queue);
     if (S.hour >= CFG.endHour) finish();
   }
 
-  /* -------------------------------------------------------------- render */
-  const el = (id) => document.getElementById(id);
+  /* --------------------------------------------------------------- draw */
+  function draw(house, carLoad, net, queue) {
+    const pct = (net / LIMIT) * 100;
+    const toTrack = (kw) => (kw / LIMIT) * 68;   // the limit mark sits at 68% of the track
 
-  function render(houseShown, carLoad, net) {
-    const limit = CFG.txRating * CFG.safeLimit;
-    const pct = (net / limit) * 100;
-    // the dashed limit sits at 70% of the track so an overload is visibly past it
-    const toTrack = (kw) => (kw / limit) * 70;
+    const hw = Math.max(0, Math.min(100, toTrack(house)));
+    el('segHomes').style.width = hw + '%';
+    el('segCars').style.width = Math.max(0, Math.min(100 - hw, toTrack(carLoad))) + '%';
 
-    el('fillHouse').style.width = Math.min(100, toTrack(Math.max(0, houseShown))) + '%';
-    el('fillCar').style.width = Math.min(100 - toTrack(Math.max(0, houseShown)), toTrack(Math.max(0, carLoad))) + '%';
-    el('pct').textContent = Math.round(pct) + '%';
+    el('nowKW').textContent = Math.round(net);
     el('clock').textContent = hhmm(S.hour);
+    el('fHomes').textContent = Math.round(house) + ' kW';
+    el('fCars').textContent = Math.round(carLoad) + ' kW';
+    el('fHead').textContent = Math.round(LIMIT - net) + ' kW';
+    el('fPct').textContent = Math.round(pct) + '%';
 
-    const over = net > limit;
+    const over = net > LIMIT;
+    document.querySelector('.track').classList.toggle('over', over);
     el('alarm').classList.toggle('show', over);
-    const v = el('verdict');
-    if (S.hour <= CFG.startHour + 0.05) { v.textContent = 'Quiet — everyone’s still out'; v.className = 'verdict'; }
-    else if (over) { v.textContent = 'Past the safe limit'; v.className = 'verdict bad'; }
-    else if (pct > 80) { v.textContent = 'Getting tight'; v.className = 'verdict warn'; }
-    else { v.textContent = 'Comfortably within limits'; v.className = 'verdict ok'; }
+    el('nowKW').style.color = over ? 'var(--bad)' : pct > 85 ? 'var(--warn)' : 'var(--ink)';
 
-    // the street
-    const homes = el('street').children;
-    for (let i = 0; i < homes.length; i++) {
+    const st = el('state');
+    if (S.hour <= CFG.startHour + 0.05) { st.textContent = 'waiting'; st.className = 'state'; }
+    else if (over) { st.textContent = 'over the limit'; st.className = 'state bad'; }
+    else if (pct > 85) { st.textContent = 'getting tight'; st.className = 'state warn'; }
+    else { st.textContent = 'within limits'; st.className = 'state ok'; }
+
+    // charge points
+    const tiles = el('points').children;
+    for (let i = 0; i < tiles.length; i++) {
       const car = S.cars.find((c) => c.home === i);
-      const walls = homes[i].querySelector('.walls');
-      const box = homes[i].querySelector('.car');
-      const soc = homes[i].querySelector('.soc');
-      walls.classList.toggle('lit', houseLoad(S.hour) > 0.6);
-      walls.classList.toggle('dark', over);
-      if (!car) { box.style.visibility = 'hidden'; continue; }
-      box.style.visibility = 'visible';
+      const tile = tiles[i];
+      const kw = tile.querySelector('.kw'), lvl = tile.querySelector('.lvl i');
+      if (!car) { tile.className = 'pt off'; kw.textContent = '—'; lvl.style.width = '0%'; continue; }
       const home = S.hour >= car.arrive && S.hour < car.depart;
-      box.classList.toggle('hidden', !home);
-      box.classList.toggle('charging', car.power >= CFG.chargerKW - 0.2);
-      box.classList.toggle('slow', car.power > 0 && car.power < CFG.chargerKW - 0.2);
-      soc.style.width = Math.round(car.soc * 100) + '%';
-      soc.style.background = car.ready ? 'var(--safe)' : car.power > 0 ? 'var(--car)' : '#9fb0c0';
+      let cls = 'pt';
+      if (!home) cls += ' off';
+      else if (car.power >= CFG.chargerKW - 0.15) cls += ' fast';
+      else if (car.power > 0) cls += ' held';
+      else if (car.ready) cls += ' full';
+      else cls += ' off';
+      tile.className = cls;
+      kw.textContent = !home ? '—' : car.power > 0 ? car.power.toFixed(1) : car.ready ? 'full' : '0.0';
+      lvl.style.width = Math.round(car.soc * 100) + '%';
     }
 
-    scores(null, pct);
+    drawController(house, net, queue);
+    score();
   }
 
-  function scores(done, livePct) {
-    const limit = CFG.txRating * CFG.safeLimit;
-    const peakPct = Math.round((S.peak / limit) * 100);
+  function drawController(house, net, queue) {
+    const smart = S.mode === 'smart';
+    el('ctl').classList.toggle('idle', !smart);
+    el('ctlHint').innerHTML = smart ? 'live, every minute' : 'switch to <b>Our controller</b>';
+
+    el('s1').textContent = `reading ${Math.round(net)} kW on a ${CFG.txRating} kW transformer`;
+    el('s2').textContent = smart
+      ? `${Math.round(LIMIT)} kW limit − ${Math.round(house)} kW homes = ${Math.round(Math.max(0, LIMIT - house))} kW to share`
+      : `${Math.round(LIMIT)} kW limit, not being enforced`;
+    el('s3').textContent = queue.length ? `${queue.length} cars plugged in and still charging` : 'no cars charging yet';
+    el('s4').textContent = smart ? 'each charger told its own limit over the control pilot' : 'every charger free to take 7.4 kW';
+
+    const body = el('queue');
+    if (!smart || !queue.length) {
+      body.innerHTML = `<tr class="empty"><td colspan="6">${smart ? 'no cars charging' : 'not managing — every car takes what it wants'}</td></tr>`;
+      return;
+    }
+    body.innerHTML = queue.slice(0, 8).map((q) => {
+      // four pips, filled as slack runs out
+      const pips = q.laxity > 6 ? 1 : q.laxity > 3 ? 2 : q.laxity > 1 ? 3 : 4;
+      const hot = pips === 4 ? ' hot' : '';
+      const bars = [0, 1, 2, 3].map((i) => `<i class="${i < pips ? 'on' : ''}"></i>`).join('');
+      return `<tr>
+        <td>#${q.c.id}</td>
+        <td>${Math.round(q.c.soc * 100)}%</td>
+        <td>${hhmm(q.c.depart)}</td>
+        <td>${Math.round(q.need)} kWh</td>
+        <td><span class="urg${hot}">${bars}</span></td>
+        <td>${q.c.power > 0 ? q.c.power.toFixed(1) + ' kW' : 'waiting'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function score() {
+    const peakPct = Math.round((S.peak / LIMIT) * 100);
     const ready = S.cars.filter((c) => c.ready).length;
     el('sPeak').textContent = S.peak ? peakPct + '%' : '—';
-    el('sOver').textContent = S.overMin ? S.overMin + ' min' : (S.hour > CFG.startHour ? 'none' : '—');
+    el('sOver').textContent = S.hour > CFG.startHour ? (S.overMin ? S.overMin + ' min' : 'none') : '—';
     el('sReady').textContent = S.cars.length ? ready + ' of ' + S.cars.length : '—';
     el('sPeak').parentElement.className = 'score' + (S.peak ? (peakPct > 100 ? ' bad' : ' good') : '');
     el('sOver').parentElement.className = 'score' + (S.hour > CFG.startHour ? (S.overMin ? ' bad' : ' good') : '');
@@ -241,8 +226,15 @@
 
   /* --------------------------------------------------------------- flow */
   let timer = null;
+  function reset() {
+    S.hour = CFG.startHour; S.cars = buildCars(); S.peak = 0; S.overMin = 0;
+    const perHomePeak = (CFG.txRating * 0.5) / CFG.homes;
+    const h0 = CFG.homes * houseLoad(CFG.startHour) * perHomePeak;
+    draw(h0, 0, h0, []);
+    el('alarm').classList.remove('show');
+  }
   function play() {
-    if (S.running) { stop(); return; }
+    if (S.running) return stop();
     if (S.hour >= CFG.endHour) reset();
     S.running = true;
     el('play').textContent = '❚❚ Pause';
@@ -250,30 +242,25 @@
     timer = setInterval(step, 38);
   }
   function stop() {
-    S.running = false;
-    clearInterval(timer);
+    S.running = false; clearInterval(timer);
     el('play').textContent = S.hour >= CFG.endHour ? '▶ Run it again' : '▶ Continue';
     el('play').classList.remove('running');
   }
   function finish() {
     stop();
-    const limit = CFG.txRating * CFG.safeLimit;
-    S.results[key()] = {
-      peak: Math.round((S.peak / limit) * 100),
+    S.results[S.mode] = {
+      peak: Math.round((S.peak / LIMIT) * 100),
       over: S.overMin,
       ready: S.cars.filter((c) => c.ready).length,
       total: S.cars.length,
     };
     showCompare();
   }
-  const key = () => S.mode + (S.solar ? '+solar' : '');
-
   function showCompare() {
-    const a = S.results[S.solar ? 'none+solar' : 'none'];
-    const b = S.results[S.solar ? 'smart+solar' : 'smart'];
+    const a = S.results.none, b = S.results.smart;
     if (!a || !b) return;
     el('compare').hidden = false;
-    el('cPeakA').textContent = a.peak + '%';   el('cPeakB').textContent = b.peak + '%';
+    el('cPeakA').textContent = a.peak + '%'; el('cPeakB').textContent = b.peak + '%';
     el('cOverA').textContent = a.over ? a.over + ' min' : 'none';
     el('cOverB').textContent = b.over ? b.over + ' min' : 'none';
     el('cReadyA').textContent = a.ready + ' of ' + a.total;
@@ -282,48 +269,28 @@
     el('takeaway').textContent =
       'Same cars, same energy, same night — the only thing that changed is when the power was drawn. Left alone the ' +
       `street pushes the transformer well past its limit (around ${round(a.peak)}% here) for a few hours. Sharing the ` +
-      `capacity keeps it under the limit, and the cars still leave charged. The exact figures depend on the assumptions ` +
-      'behind this model; the pattern is what matters.';
+      'capacity keeps it under the limit, and the cars still leave charged. The exact figures follow from this ' +
+      'model’s assumptions; the pattern is the point.';
   }
 
   /* --------------------------------------------------------------- init */
-  function buildStreet() {
-    const wrap = el('street');
+  (function build() {
+    el('limitKW').textContent = Math.round(LIMIT) + ' kW';
+    const wrap = el('points');
     wrap.innerHTML = '';
     for (let i = 0; i < CFG.homes; i++) {
       const d = document.createElement('div');
-      d.className = 'home';
-      d.innerHTML = '<div class="roof"></div><div class="walls"></div><div class="car"><div class="soc"></div></div>';
+      d.className = 'pt off';
+      d.innerHTML = `<div class="id">No. ${i + 1}</div><div class="kw">—</div><div class="lvl"><i></i></div>`;
       wrap.appendChild(d);
     }
-  }
-
-  function addSolarToggle() {
-    const btn = document.createElement('button');
-    btn.className = 'mode solar';
-    btn.id = 'solarBtn';
-    btn.innerHTML = '<b>☀ Solar canopy</b><span>off</span>';
-    btn.addEventListener('click', () => {
-      S.solar = !S.solar;
-      btn.classList.toggle('on', S.solar);
-      btn.querySelector('span').textContent = S.solar ? 'on — PV + battery' : 'off';
-      el('compare').hidden = true;
-      stop(); reset();
-      showCompare();
-    });
-    // el('clock') is the span inside .clock, so insert before the wrapper
-    document.querySelector('.controls').insertBefore(btn, document.querySelector('.clock'));
-  }
-
-  buildStreet();
-  addSolarToggle();
+  })();
   reset();
 
   el('play').addEventListener('click', play);
   document.querySelectorAll('.mode[data-mode]').forEach((b) => b.addEventListener('click', () => {
     document.querySelectorAll('.mode[data-mode]').forEach((x) => x.classList.toggle('on', x === b));
     S.mode = b.dataset.mode;
-    stop(); reset();
-    showCompare();
+    stop(); reset(); showCompare();
   }));
 })();

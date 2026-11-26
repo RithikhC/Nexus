@@ -4,131 +4,148 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>What happens when a whole street charges at once?</title>
-<meta name="description" content="A simple simulation of EV charging on one neighbourhood transformer, with and without smart coordination.">
+<meta name="description" content="A live view of one neighbourhood transformer as electric cars charge, with and without a controller sharing the capacity.">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header>
   <h1>What happens when a whole street charges at once?</h1>
-  <p class="sub">One neighbourhood transformer. 24 homes. Watch what the evening does to it.</p>
+  <p class="sub">24 homes. One transformer. Press play and watch the evening.</p>
 </header>
 
 <main>
 
-  <!-- ============== the control strip ============== -->
+  <!-- ===================== controls ===================== -->
   <div class="controls">
     <button id="play" class="play">▶ Start the evening</button>
-
     <div class="modes">
-      <button class="mode on" data-mode="none">
-        <b>No control</b><span>every car charges flat out</span>
-      </button>
-      <button class="mode" data-mode="smart">
-        <b>Smart charging</b><span>our system shares the capacity</span>
-      </button>
+      <button class="mode on" data-mode="none"><b>No control</b><span>every car charges flat out</span></button>
+      <button class="mode" data-mode="smart"><b>Our controller</b><span>shares the spare capacity</span></button>
     </div>
-
     <div class="clock"><span id="clock">16:00</span></div>
   </div>
 
-  <!-- ============== the transformer ============== -->
-  <section class="panel">
-    <div class="panel-head">
+  <!-- ===================== transformer ===================== -->
+  <section class="panel wide">
+    <div class="ph">
       <h2>The street's transformer</h2>
-      <div class="verdict" id="verdict">Quiet — everyone's still out</div>
+      <div class="state" id="state">waiting</div>
     </div>
 
-    <div class="meter">
-      <div class="bar">
-        <div class="fill house" id="fillHouse"></div>
-        <div class="fill car"   id="fillCar"></div>
-        <div class="limit"><span>safe limit</span></div>
-        <div class="readout"><b id="pct">0%</b> of what the transformer can take</div>
+    <div class="gauge">
+      <div class="track">
+        <div class="seg homes" id="segHomes"></div>
+        <div class="seg cars"  id="segCars"></div>
+        <div class="thresh"><span>safe limit <b id="limitKW">95 kW</b></span></div>
       </div>
-      <div class="legend">
-        <span><i class="sw house"></i>Homes — lights, cooking, air conditioning</span>
-        <span><i class="sw car"></i>Electric cars charging</span>
-      </div>
+      <div class="big"><b id="nowKW">0</b><span>kW drawn right now</span></div>
     </div>
 
-    <div class="alarm" id="alarm">⚠ OVERLOADED — this is how a street loses power</div>
-  </section>
-
-  <!-- ============== the street ============== -->
-  <section class="panel">
-    <div class="panel-head">
-      <h2>The street</h2>
-      <div class="hint">each house shows its car filling up</div>
+    <div class="facts">
+      <div><i class="d homes"></i>Homes <b id="fHomes">0 kW</b></div>
+      <div><i class="d cars"></i>Cars charging <b id="fCars">0 kW</b></div>
+      <div><i class="d head"></i>Spare capacity <b id="fHead">0 kW</b></div>
+      <div><i class="d pct"></i>Of the limit <b id="fPct">0%</b></div>
     </div>
-    <div class="street" id="street"></div>
-    <div class="legend">
-      <span><i class="sw idle"></i>not plugged in</span>
-      <span><i class="sw charge"></i>charging</span>
-      <span><i class="sw slow"></i>charging slowly, on purpose</span>
-      <span><i class="sw done"></i>full</span>
+
+    <div class="alarm" id="alarm">
+      <b>OVERLOADED</b> — the transformer is carrying more than it is built for. Sustained, this ages it and trips the street.
     </div>
   </section>
 
-  <!-- ============== the scoreboard ============== -->
+  <div class="split">
+
+    <!-- ===================== charge points ===================== -->
+    <section class="panel">
+      <div class="ph">
+        <h2>Charge points</h2>
+        <div class="hint">live draw at each home</div>
+      </div>
+      <div class="points" id="points"></div>
+      <div class="key">
+        <span><i class="k off"></i>away</span>
+        <span><i class="k full"></i>full</span>
+        <span><i class="k fast"></i>charging 7.4 kW</span>
+        <span><i class="k held"></i>held back</span>
+      </div>
+    </section>
+
+    <!-- ===================== the controller ===================== -->
+    <section class="panel">
+      <div class="ph">
+        <h2>What the controller is doing</h2>
+        <div class="hint" id="ctlHint">switch to <b>Our controller</b></div>
+      </div>
+
+      <div class="ctl" id="ctl">
+        <div class="steps">
+          <div class="step">
+            <span class="n">1</span>
+            <div><b>Measures the transformer</b>
+              <em id="s1">every minute</em></div>
+          </div>
+          <div class="step">
+            <span class="n">2</span>
+            <div><b>Works out the spare capacity</b>
+              <em id="s2">limit − everything else</em></div>
+          </div>
+          <div class="step">
+            <span class="n">3</span>
+            <div><b>Ranks cars by who needs it most</b>
+              <em id="s3">time left vs charge needed</em></div>
+          </div>
+          <div class="step">
+            <span class="n">4</span>
+            <div><b>Sets each charger's limit</b>
+              <em id="s4">shared out, most urgent first</em></div>
+          </div>
+        </div>
+
+        <table class="queue">
+          <thead><tr><th>Car</th><th>Battery</th><th>Leaves</th><th>Still needs</th><th>Urgency</th><th>Gets</th></tr></thead>
+          <tbody id="queue"><tr class="empty"><td colspan="6">press play</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ===================== scoreboard ===================== -->
   <section class="scores">
-    <div class="score">
-      <div class="k">Worst load tonight</div>
-      <b id="sPeak">—</b>
-      <div class="n">anything over 100% damages the transformer</div>
-    </div>
-    <div class="score">
-      <div class="k">Time overloaded</div>
-      <b id="sOver">—</b>
-      <div class="n">how long it spent past the safe limit</div>
-    </div>
-    <div class="score">
-      <div class="k">Cars ready by 8am</div>
-      <b id="sReady">—</b>
-      <div class="n">drivers still need a full battery</div>
-    </div>
+    <div class="score"><div class="k">Worst load tonight</div><b id="sPeak">—</b><div class="n">over 100% damages the transformer</div></div>
+    <div class="score"><div class="k">Time overloaded</div><b id="sOver">—</b><div class="n">how long it spent past the limit</div></div>
+    <div class="score"><div class="k">Cars full by 8am</div><b id="sReady">—</b><div class="n">drivers still need their range</div></div>
   </section>
 
-  <!-- ============== the comparison, revealed after both runs ============== -->
   <section class="compare" id="compare" hidden>
     <h2>Side by side</h2>
     <table>
-      <tr><th></th><th>No control</th><th>Smart charging</th></tr>
+      <tr><th></th><th>No control</th><th>Our controller</th></tr>
       <tr><td>Worst load</td><td id="cPeakA">—</td><td id="cPeakB">—</td></tr>
       <tr><td>Time overloaded</td><td id="cOverA">—</td><td id="cOverB">—</td></tr>
-      <tr><td>Cars ready by 8am</td><td id="cReadyA">—</td><td id="cReadyB">—</td></tr>
+      <tr><td>Cars full by 8am</td><td id="cReadyA">—</td><td id="cReadyB">—</td></tr>
     </table>
     <p class="takeaway" id="takeaway"></p>
   </section>
 
   <section class="explain">
-    <h2>What you just saw</h2>
     <div class="cards">
-      <div class="card">
-        <h3>The grid runs on everyone being different</h3>
+      <div class="card"><h3>The grid runs on everyone being different</h3>
         <p>A transformer is never built to supply every home at once, because people don't all do the same thing at the
-           same time. That spread is called <em>diversity</em>, and the whole network is sized around it.</p>
-      </div>
-      <div class="card">
-        <h3>Car charging breaks that</h3>
-        <p>A home charger pulls about as much power as the rest of the house combined, and everyone plugs in when they
-           get home from work. Suddenly all the homes <em>are</em> doing the same thing at the same time.</p>
-      </div>
-      <div class="card">
-        <h3>Nobody actually needs it all at once</h3>
-        <p>A car home at 6pm and leaving at 8am has fourteen hours to absorb four hours of charging. Smart charging
-           simply spreads that out, giving power first to whoever leaves soonest.</p>
-      </div>
+           same time. The whole network is sized around that spread.</p></div>
+      <div class="card"><h3>Charging breaks that</h3>
+        <p>A home charger pulls about as much as the rest of the house combined, and everyone plugs in when they get
+           home. Suddenly every home <em>is</em> doing the same thing at once.</p></div>
+      <div class="card"><h3>Nobody needs it all at once</h3>
+        <p>A car home at 6pm and leaving at 8am has fourteen hours to take on four hours of charge. The controller
+           just spreads it, giving power first to whoever leaves soonest.</p></div>
     </div>
-    <div class="caveat">
-      <b>About the numbers.</b> This is a teaching model of one street, not a study of a real network. The shapes and
-      the comparison are the point; the exact percentages follow from the assumptions listed in the paper, and a real
-      feeder would differ. Nothing here is a measurement.
-    </div>
-    <p class="foot">
-      Student research project for NEXUS 3.0 · Amity University Dubai × IEEE Student Branch ·
-      Track 01, SDG 9 · the full paper and its sources are in this repository.
-    </p>
+    <div class="caveat"><b>About the numbers.</b> This is a teaching model of one street, not a study of a real network.
+      The pattern is the point; the exact figures follow from the assumptions set out in the paper. Nothing here is a
+      measurement.</div>
+    <p class="foot">Student research project for NEXUS 3.0 · Amity University Dubai × IEEE Student Branch ·
+      Track 01, SDG 9 · <a href="https://github.com/RithikhC/Nexus">paper and sources</a></p>
   </section>
 
 </main>

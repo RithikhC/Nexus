@@ -26,12 +26,17 @@ Open the [live demo](https://rithikhc.github.io/Nexus/) and press play. You watc
 
 - **No control** — every car charges flat out the moment it arrives. The transformer goes well past its safe limit and
   stays there for hours.
-- **Smart charging** — the controller measures how much headroom is left under the limit and shares it out, giving
-  power first to whoever leaves soonest. The transformer stays under the limit and the cars still leave charged.
-- **☀ Solar canopy** — a shared PV array with a battery, charged during the day and discharged into the evening peak,
-  adding headroom when it is scarcest.
+- **Our controller** — it measures how much capacity is left under the limit and shares it out, giving power first to
+  whoever leaves soonest. The transformer stays under the limit and the cars still leave charged.
 
 Same cars, same energy, same night. The only thing that changes is *when* the power is drawn.
+
+The page shows the controller's own working rather than just its result: the limit it is holding, the spare capacity
+it measured this minute, the live draw at each of the 24 charge points, and the ranked queue it allocated from —
+each car's battery level, departure time, energy still needed, urgency and the limit it was given.
+
+Solar generation and storage are discussed in the paper rather than the demo, so the demo stays on the one mechanism
+it is there to show.
 
 ## Where this fits today
 
