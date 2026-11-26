@@ -34,8 +34,9 @@ function mechanism() {
   const X = (u) => m.l + u * pw;                 // u in 0..1 across the evening/night
   const Y = (v) => m.t + (1 - v / TOP) * ph;     // v as a multiple of the safe limit
 
-  // a typical residential evening: rises to a peak around early evening, falls overnight
-  const houseAt = (u) => 0.30 + 0.32 * Math.exp(-Math.pow((u - 0.17) / 0.17, 2));
+  // A Gulf summer evening. The baseline is high and stays high: air conditioning
+  // does not stop overnight, so the valley charging relies on is shallow.
+  const houseAt = (u) => 0.46 + 0.20 * Math.exp(-Math.pow((u - 0.17) / 0.20, 2));
   // charging switched on as people arrive, then held until batteries fill
   const carAt = (u) => (u < 0.05 ? 0 : 0.78 * Math.exp(-Math.pow((u - 0.20) / 0.20, 2)));
 
@@ -186,6 +187,7 @@ function architecture() {
 (async () => {
   console.log('figures:');
   await png('fig1-mechanism.png', mechanism(), 6.8);
+  // kept for reference: the current paper uses Fig. 1 and the architecture only
   await png('fig2-framework.png', framework(), 6.8);
   await png('fig3-architecture.png', architecture(), 6.8);
 })();

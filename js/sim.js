@@ -29,9 +29,19 @@
   };
   const LIMIT = CFG.txRating * CFG.safeLimit;
 
+  /* A Gulf summer residential day, hour by hour, as a fraction of the evening
+   * peak. The shape matters more than the numbers. Two features are specific
+   * to this climate and both work against us:
+   *   - the floor is high. Air conditioning does not stop overnight when the
+   *     minimum is around 31 degrees, so the quiet hours smart charging relies
+   *     on are much shallower here than in the temperate studies.
+   *   - it is flatter and more correlated. Cooling is driven by one variable
+   *     every household shares, the outdoor temperature, so homes peak together
+   *     before a single car is plugged in.
+   */
   const SHAPE = [
-    0.42, 0.38, 0.36, 0.35, 0.36, 0.40, 0.52, 0.64, 0.68, 0.64, 0.60, 0.58,
-    0.58, 0.58, 0.60, 0.66, 0.78, 0.92, 1.00, 0.98, 0.90, 0.78, 0.62, 0.50,
+    0.62, 0.58, 0.56, 0.55, 0.55, 0.57, 0.60, 0.63, 0.64, 0.66, 0.70, 0.74,
+    0.78, 0.81, 0.83, 0.84, 0.84, 0.86, 0.90, 0.96, 1.00, 0.98, 0.88, 0.72,
   ];
 
   /* ------------------------------------------------------------ helpers */

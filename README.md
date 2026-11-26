@@ -13,7 +13,9 @@ Rithikh Chandran · Chrislyn Ann Ginu · Gollapalli Darshitha
 
 Electricity networks are sized on **diversity** — the assumption that households do not all draw their maximum power
 at the same moment. A home EV charger pulls roughly as much as the rest of the house combined, and everyone plugs in
-when they get home from work, so that assumption stops holding. The street's transformer, which was sized before EVs
+when they get home from work, so that assumption stops holding. In the Gulf it is weaker still: household
+load is dominated by air conditioning, which every home runs against the same outdoor temperature, so the
+street is already correlated before a single car plugs in. The street's transformer, which was sized before EVs
 existed, ends up carrying far more than it was built for. Sustained overloading ages the transformer and eventually
 trips it, and the street loses supply.
 
