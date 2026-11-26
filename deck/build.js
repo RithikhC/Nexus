@@ -66,7 +66,7 @@ pres.defineSlideMaster({
     { text: { text: 'NEXUS 3.0  ·  Amity University Dubai × IEEE', options: {
       x: M, y: H - 0.42, w: 5.5, h: 0.26, fontSize: 9, color: 'A7B2BF', isTextBox: true } } },
   ],
-  slideNumber: { x: W - M - 0.32, y: H - 0.42, w: 0.32, h: 0.26, fontSize: 9, color: 'A7B2BF', align: 'right' },
+  slideNumber: { x: W - M - 0.6, y: H - 0.42, w: 0.6, h: 0.26, fontSize: 9, color: 'A7B2BF', align: 'right' },
 });
 
 pres.defineSlideMaster({
@@ -78,7 +78,7 @@ pres.defineSlideMaster({
     { text: { text: 'NEXUS 3.0  ·  Amity University Dubai × IEEE', options: {
       x: M, y: H - 0.42, w: 5.5, h: 0.26, fontSize: 9, color: 'A7B2BF', isTextBox: true } } },
   ],
-  slideNumber: { x: W - M - 0.32, y: H - 0.42, w: 0.32, h: 0.26, fontSize: 9, color: 'A7B2BF', align: 'right' },
+  slideNumber: { x: W - M - 0.6, y: H - 0.42, w: 0.6, h: 0.26, fontSize: 9, color: 'A7B2BF', align: 'right' },
 });
 
 /* ------------------------------------------------------------ helpers */
@@ -343,6 +343,143 @@ pres.addSection({ title: 'Close' });
       options: { fontSize: 12.5, color: '8C9BAB', italic: true } },
   ], { placeholder: 'body' });
   s.addNotes('Close on the contribution and the honest limit. Then take questions.');
+}
+
+/* =============================================================== 11 */
+pres.addSection({ title: 'Deployment' });
+{
+  const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'Deployment' });
+  s.addText('Getting it into a real network', { placeholder: 'title' });
+  s.addText('Phased the way utilities actually adopt control: observe, pilot, then widen the mandate.', {
+    x: M, y: 1.06, w: W - 2 * M, h: 0.3, fontSize: 13, color: C.text2, isTextBox: true });
+
+  const phases = [
+    ['Instrument', '0–6 months', 'Meter a sample of distribution transformers in a high-EV district. No control at all — '
+      + 'just establish how often the limit is approached, and how much of it is charging.'],
+    ['Pilot', '6–18 months', 'One or two feeders, opt-in customers. The controller enforces; the advisor runs in '
+      + 'advisory-only mode while the operator builds trust in it.'],
+    ['Regulate', '18–36 months', 'Work with DEWA to define a managed-connection class, assessed against an enforced '
+      + 'envelope rather than a nameplate rating. This is the unlock.'],
+    ['Scale', '36 months +', 'District by district. The advisory layer moves from advisory to standard operating '
+      + 'procedure — the same path FLISR took.'],
+  ];
+  phases.forEach(([head, when, body], i) => {
+    const x = M + i * 2.31;
+    card(s, { x, y: 1.45, w: 2.1, h: 2.75, name: `phase-${i}` });
+    disc(s, i + 1, x + 0.22, 1.65, 0.38, i === 2 ? THEME.colors.accent1 : THEME.colors.accent2);
+    s.addText(head, { x: x + 0.22, y: 2.12, w: 1.7, h: 0.28, fontSize: 15, bold: true,
+      color: C.text1, valign: 'top', margin: 0, isTextBox: true });
+    s.addText(when, { x: x + 0.22, y: 2.4, w: 1.7, h: 0.24, fontSize: 10.5, bold: true,
+      color: THEME.colors.accent1, valign: 'top', margin: 0, isTextBox: true });
+    s.addText(body, { x: x + 0.22, y: 2.68, w: 1.7, h: 1.42, fontSize: 11, color: C.text2,
+      valign: 'top', margin: 0, isTextBox: true });
+  });
+  s.addText('Nothing in phases 1 and 2 needs a regulatory change — they can start on the existing framework.', {
+    x: M, y: 4.38, w: W - 2 * M, h: 0.3, fontSize: 12.5, italic: true, color: THEME.colors.accent1, isTextBox: true });
+  s.addNotes('The order matters. We do not ask anyone to trust an algorithm on day one: phase 1 is measurement only, '
+    + 'and phase 2 runs advisory while the operator watches. The regulatory step comes once there is evidence.');
+}
+
+/* =============================================================== 12 */
+pres.addSection({ title: 'Business model' });
+{
+  const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'Business model' });
+  s.addText('Who pays, and why they would', { placeholder: 'title' });
+
+  card(s, { x: M, y: 1.2, w: 4.35, h: 1.65, name: 'bm-anchor', fill: '2A3644', line: '2A3644' });
+  s.addText([
+    { text: '≈ £7,000', options: { fontSize: 28, bold: true, color: 'F0A868' } },
+  ], { x: M + 0.22, y: 1.3, w: 3.95, h: 0.46, valign: 'top', margin: 0, isTextBox: true });
+  s.addText('of reinforcement avoided per circuit', { x: M + 0.22, y: 1.78, w: 3.95, h: 0.26,
+    fontSize: 13, color: 'E6ECF2', valign: 'top', margin: 0, isTextBox: true });
+  s.addText('Derived from My Electric Avenue’s own two figures — £2.2bn across 312,000 circuits. '
+    + 'That is the budget our software has to beat.', {
+    x: M + 0.22, y: 2.08, w: 3.95, h: 0.62, fontSize: 10.5, color: 'A9B6C4', valign: 'top',
+    margin: 0, isTextBox: true });
+
+  const left = [
+    ['The utility pays', 'Because the saving is theirs: deferred capital, and visibility of a load class that is '
+      + 'invisible today. Sold per managed charge point, per month.'],
+    ['Or the connection pays', 'A developer refused capacity today waits for reinforcement. A managed connection '
+      + 'approved now is worth a one-off enablement fee.'],
+  ];
+  left.forEach(([head, body], i) => {
+    const y = 3.0 + i * 0.92;
+    s.addText(head, { x: M, y, w: 4.35, h: 0.26, fontSize: 14, bold: true, color: C.text1,
+      valign: 'top', margin: 0, isTextBox: true });
+    s.addText(body, { x: M, y: y + 0.26, w: 4.35, h: 0.62, fontSize: 11.5, color: C.text2,
+      valign: 'top', margin: 0, isTextBox: true });
+  });
+
+  card(s, { x: 5.2, y: 1.2, w: 4.25, h: 3.35, name: 'bm-right' });
+  s.addText('What makes the margin work', {
+    x: 5.42, y: 1.38, w: 3.8, h: 0.28, fontSize: 13, bold: true, color: C.text1, valign: 'top',
+    margin: 0, isTextBox: true });
+  const right = [
+    'No new hardware at the charge point. Enforcement rides on IEC 61851 and OCPP, which every compliant '
+      + 'point already implements.',
+    'One meter per transformer, not one per home — the cost scales with assets, not customers.',
+    'It sits inside the ADMS the utility already runs, beside FLISR, over protocols already deployed.',
+    'A single vertically-integrated utility means one customer and one decision — then the same case '
+      + 'across the GCC, where the climate argument holds.',
+  ];
+  right.forEach((t, i) => {
+    const y = 1.8 + i * 0.72;
+    disc(s, i + 1, 5.42, y, 0.26, THEME.colors.accent2);
+    s.addText(t, { x: 5.8, y: y - 0.04, w: 3.42, h: 0.62, fontSize: 11, color: C.text2,
+      valign: 'top', margin: 0, isTextBox: true });
+  });
+  s.addNotes('The key commercial point: we are not selling hardware. The enforcement path already exists in every '
+    + 'compliant charge point, so the cost base is software plus one meter per transformer.');
+}
+
+/* =============================================================== 13 */
+pres.addSection({ title: 'Thank you' });
+{
+  const s = pres.addSlide({ masterName: 'DARK', sectionTitle: 'Thank you' });
+  s.addText('Thank you', { x: M, y: 0.42, w: 5, h: 0.75, fontSize: 36, bold: true,
+    color: 'FFFFFF', valign: 'middle', margin: 0, isTextBox: true });
+  s.addText('Questions welcome  ·  demo and paper at  rithikhc.github.io/Nexus', {
+    x: M, y: 1.12, w: 6.5, h: 0.3, fontSize: 13, color: '9FB0C0', valign: 'top',
+    margin: 0, isTextBox: true });
+
+  card(s, { x: M, y: 1.62, w: W - 2 * M, h: 3.4, name: 'refcard', fill: 'FFFFFF', line: 'FFFFFF' });
+  s.addText('Sources for every figure in this deck', {
+    x: M + 0.25, y: 1.78, w: 8, h: 0.26, fontSize: 12, bold: true, color: THEME.colors.dk1,
+    valign: 'top', margin: 0, isTextBox: true });
+
+  const colA = [
+    ['0.75 and 0.25 vehicles per home', 'R. M. Pratt and L. E. Bernal, “Distribution System V1G PEV Charging '
+      + 'Impacts Report,” Pacific Northwest National Laboratory, Rep. PNNL-27206, Jan. 2018.'],
+    ['32%, 312,000 circuits, £2.2bn', 'EA Technology, “My Electric Avenue,” Project Summary Report, Ofgem Low '
+      + 'Carbon Networks Fund, 2015.'],
+    ['AED 0.70 / 1.20 per kWh, slab tariff', 'DEWA, EV charging tariffs implementing Cabinet Decision No. 81 of '
+      + '2024; DEWA residential slab tariff.'],
+  ];
+  const colB = [
+    ['DEWA approval, installation rules', 'DEWA, EV Charging Technical Regulations; DEWA, Regulations for '
+      + 'Electrical Installations, 2017.'],
+    ['6 A to 80 A control pilot, OCPP', 'IEC 61851-1:2017; IEC 62196; Open Charge Alliance, OCPP 1.6J and 2.0.1 '
+      + 'Smart Charging.'],
+    ['Operator-assisted mode, human oversight', 'GE Vernova D400-DA product documentation; Oracle Utilities NMS; '
+      + 'UAE Charter for the Development and Use of Artificial Intelligence.'],
+  ];
+  const putRefs = (list, x) => list.forEach(([label, src], i) => {
+    const y = 2.14 + i * 0.92;
+    s.addText(label, { x, y, w: 4.2, h: 0.24, fontSize: 10.5, bold: true, color: THEME.colors.accent2,
+      valign: 'top', margin: 0, isTextBox: true });
+    s.addText(src, { x, y: y + 0.22, w: 4.2, h: 0.66, fontSize: 10, color: '4A5A6B',
+      valign: 'top', margin: 0, isTextBox: true });
+  });
+  putRefs(colA, M + 0.25);
+  putRefs(colB, M + 4.72);
+
+  s.addText('The 153% and 87% on the demonstration slide are from our own teaching model of one street, '
+    + 'not a measurement and not from any source above.', {
+    x: M + 0.25, y: 4.68, w: 8.9, h: 0.26, fontSize: 10, italic: true, color: '7A8794',
+    valign: 'top', margin: 0, isTextBox: true });
+  s.addNotes('Leave this up during questions. Everything quantitative in the talk is sourced here, and the one '
+    + 'thing that is ours is labelled as ours.');
 }
 
 (async () => {
