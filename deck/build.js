@@ -384,35 +384,42 @@ pres.addSection({ title: 'Deployment' });
 pres.addSection({ title: 'Business model' });
 {
   const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'Business model' });
-  s.addText('Who pays, and why they would', { placeholder: 'title' });
+  s.addText('The business case, plainly', { placeholder: 'title' });
 
-  card(s, { x: M, y: 1.2, w: 4.35, h: 1.65, name: 'bm-anchor', fill: '2A3644', line: '2A3644' });
-  s.addText([
-    { text: '≈ £7,000', options: { fontSize: 28, bold: true, color: 'F0A868' } },
-  ], { x: M + 0.22, y: 1.3, w: 3.95, h: 0.46, valign: 'top', margin: 0, isTextBox: true });
-  s.addText('of reinforcement avoided per circuit', { x: M + 0.22, y: 1.78, w: 3.95, h: 0.26,
-    fontSize: 13, color: 'E6ECF2', valign: 'top', margin: 0, isTextBox: true });
-  s.addText('Derived from My Electric Avenue’s own two figures — £2.2bn across 312,000 circuits. '
-    + 'That is the budget our software has to beat.', {
-    x: M + 0.22, y: 2.08, w: 3.95, h: 0.62, fontSize: 10.5, color: 'A9B6C4', valign: 'top',
+  /* Only AED figures we can actually source. A British reinforcement cost
+     converted into dirhams would look precise and mean nothing. */
+  card(s, { x: M, y: 1.2, w: 4.35, h: 1.72, name: 'bm-anchor', fill: '2A3644', line: '2A3644' });
+  s.addText('Charging in Dubai is already paid for', { x: M + 0.22, y: 1.32, w: 3.95, h: 0.26,
+    fontSize: 13, bold: true, color: 'FFFFFF', valign: 'top', margin: 0, isTextBox: true });
+  const tariffs = [['AED 0.70', 'per kWh, AC public charging'], ['AED 1.20', 'per kWh, DC public charging']];
+  tariffs.forEach(([amt, what], i) => {
+    const y = 1.66 + i * 0.36;
+    s.addText(amt, { x: M + 0.22, y, w: 1.1, h: 0.28, fontSize: 15, bold: true, color: 'F0A868',
+      valign: 'top', margin: 0, isTextBox: true });
+    s.addText(what, { x: M + 1.38, y: y + 0.03, w: 2.8, h: 0.26, fontSize: 11.5, color: 'C9D3DE',
+      valign: 'top', margin: 0, isTextBox: true });
+  });
+  s.addText('Cabinet Decision No. 81 of 2024. Home charging bills on the residential slab tariff. '
+    + 'We add nothing to the driver’s bill.', {
+    x: M + 0.22, y: 2.42, w: 3.95, h: 0.42, fontSize: 10.5, color: 'A9B6C4', valign: 'top',
     margin: 0, isTextBox: true });
 
   const left = [
-    ['The utility pays', 'Because the saving is theirs: deferred capital, and visibility of a load class that is '
-      + 'invisible today. Sold per managed charge point, per month.'],
-    ['Or the connection pays', 'A developer refused capacity today waits for reinforcement. A managed connection '
-      + 'approved now is worth a one-off enablement fee.'],
+    ['The utility pays', 'The saving is theirs: a transformer not replaced this year, and sight of a load class '
+      + 'that is invisible today. Sold per managed charge point.'],
+    ['What we cannot tell you', 'We have no verified figure for what a transformer replacement costs DEWA, so we '
+      + 'do not quote one. That number belongs in the pilot, not in this slide.'],
   ];
   left.forEach(([head, body], i) => {
-    const y = 3.0 + i * 0.92;
-    s.addText(head, { x: M, y, w: 4.35, h: 0.26, fontSize: 14, bold: true, color: C.text1,
-      valign: 'top', margin: 0, isTextBox: true });
-    s.addText(body, { x: M, y: y + 0.26, w: 4.35, h: 0.62, fontSize: 11.5, color: C.text2,
+    const y = 3.06 + i * 0.88;
+    s.addText(head, { x: M, y, w: 4.35, h: 0.26, fontSize: 14, bold: true,
+      color: i === 1 ? THEME.colors.accent1 : C.text1, valign: 'top', margin: 0, isTextBox: true });
+    s.addText(body, { x: M, y: y + 0.26, w: 4.35, h: 0.6, fontSize: 11.5, color: C.text2,
       valign: 'top', margin: 0, isTextBox: true });
   });
 
   card(s, { x: 5.2, y: 1.2, w: 4.25, h: 3.35, name: 'bm-right' });
-  s.addText('What makes the margin work', {
+  s.addText('Why it should be cheap to run', {
     x: 5.42, y: 1.38, w: 3.8, h: 0.28, fontSize: 13, bold: true, color: C.text1, valign: 'top',
     margin: 0, isTextBox: true });
   const right = [
@@ -429,8 +436,8 @@ pres.addSection({ title: 'Business model' });
     s.addText(t, { x: 5.8, y: y - 0.04, w: 3.42, h: 0.62, fontSize: 11, color: C.text2,
       valign: 'top', margin: 0, isTextBox: true });
   });
-  s.addNotes('The key commercial point: we are not selling hardware. The enforcement path already exists in every '
-    + 'compliant charge point, so the cost base is software plus one meter per transformer.');
+  s.addNotes('Keep this modest. The only AED figures here are DEWA’s published tariffs. We are not selling hardware, '
+    + 'and we are not pretending to know what a transformer costs them - that is what the pilot is for.');
 }
 
 /* =============================================================== 13 */
