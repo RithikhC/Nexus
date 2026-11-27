@@ -1,10 +1,10 @@
 # NEXUS 3.0 — presentation script
 
-**Eight minutes, two speakers, thirteen slides.** Twelve are spoken; slide 13 stays
+**Eight minutes, two speakers, fourteen slides.** Thirteen are spoken; slide 14 stays
 up through questions.
 
-Measured at **1,147 spoken words**. That is **7 min 25 s** at a normal presenting pace
-of 155 words a minute, and **8 min 10 s** if you speak slowly — so it fits, but it does
+Measured at **1,192 spoken words**. That is **7 min 40 s** at a normal presenting pace
+of 155 words a minute, and **8 min 30 s** if you speak slowly — so it fits, but it does
 not fit at a crawl. Time yourself once before you trust it.
 
 **If you overrun in rehearsal**, cut slide 4 to two sentences — the third point is the
@@ -17,8 +17,8 @@ only one that matters — and compress slide 10 to the four phase names.
 | 1–5 | **Speaker 1** | the problem, the evidence, the regulatory gap |
 | 6–9 | **Speaker 2** | the controller, the AI layer, what is new, the demo |
 | 10–11 | **Speaker 1** | deployment and the business case |
-| 12 | **Speaker 2** | the close |
-| 13 | **both** | questions |
+| 12–13 | **Speaker 2** | limits and future work, then the close |
+| 14 | **both** | questions |
 
 Speaker 1 ≈ 4 min, Speaker 2 ≈ 3 min 50 s. Whoever is more comfortable under
 questioning should take slides 7 and 8 — they attract the hardest ones.
@@ -206,22 +206,36 @@ questioning should take slides 7 and 8 — they attract the hardest ones.
 
 ---
 
-## Slide 12 · The capacity is already in the ground — **Speaker 2** · 20 s
+## Slide 12 · What we have not done, and what comes next — **Speaker 2** · 30 s
 
-> The capacity is already in the ground. What is missing is the coordination to use it.
+> We should be straight about the limits.
 >
-> That is SDG 9 almost word for word — existing infrastructure retrofitted for greater
-> resource-use efficiency — and it reaches 7 and 11 as well.
+> This argues from published sources and regulation. We have not modelled a real
+> feeder. Our advisor is rule-based, not a trained model. We do not know what a
+> transformer replacement costs DEWA. And it currently reasons over one transformer,
+> not a fleet.
 >
-> And to be straight with you: this argues from published sources and regulation. It is
-> not a validated network study, and our advisor is a transparent recommender, not a
-> trained model.
+> *(move across the slide)* Every one of those has the work that closes it on the
+> right — and the first two are phase one of the roadmap you just saw.
+
+*Do not apologise through this slide. Volunteering the limits is the strongest thing
+we do on rigour. Say it levelly and keep moving.*
+
+---
+
+## Slide 13 · The capacity is already in the ground — **Speaker 2** · 20 s
+
+> So — the capacity is already in the ground. What is missing is the coordination to
+> use it.
+>
+> That is SDG 9 almost word for word: existing infrastructure retrofitted for greater
+> resource-use efficiency. And it reaches 7 and 11 as well.
 >
 > Thank you — we are happy to take questions.
 
 ---
 
-## Slide 13 · Questions — **both**
+## Slide 14 · Questions — **both**
 
 Leave it up. Every number in the talk is sourced on it, so if someone challenges a
 figure you can point rather than argue.

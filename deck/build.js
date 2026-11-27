@@ -442,6 +442,47 @@ pres.addSection({ title: 'Business model' });
 }
 
 /* =============================================================== 13 */
+pres.addSection({ title: 'Limits' });
+{
+  const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'Limits' });
+  s.addText('What we have not done, and what comes next', { placeholder: 'title' });
+
+  const cols = [
+    ['Limitations', THEME.colors.accent1, 'FDF0EC', 'EFD9D1', [
+      ['Not a validated study', 'Argued from published sources, standards and regulation. We have not modelled a real feeder.'],
+      ['The advisor is rule-based', 'Not a trained model. It adapts in one way only: it corrects its projections by its own past error.'],
+      ['No local cost figure', 'We do not know what a transformer replacement costs DEWA, so we do not quote one.'],
+      ['One site at a time', 'The advisor reasons over a single transformer\u2019s history, not a fleet.'],
+    ]],
+    ['Future work', THEME.colors.accent2, 'EEF6FA', 'CFE4EE', [
+      ['Load-flow study', 'A representative Dubai feeder, at measured ambient temperatures rather than a reference value.'],
+      ['Hardware demonstration', 'The control pilot loop on real equipment, end to end.'],
+      ['Fleet view', 'Compare many instrumented transformers and triage which need a decision first.'],
+      ['A learned model', 'Once there is history across many feeders. The human would still decide.'],
+    ]],
+  ];
+
+  cols.forEach(([head, colour, fill, line, items], c) => {
+    const x = M + c * 4.55;
+    card(s, { x, y: 1.15, w: 4.35, h: 3.45, name: `lim-${c}`, fill, line });
+    s.addText(head, { x: x + 0.24, y: 1.3, w: 3.9, h: 0.3, fontSize: 15, bold: true, color: colour,
+      valign: 'top', margin: 0, isTextBox: true });
+    items.forEach(([t, b], i) => {
+      const y = 1.72 + i * 0.73;
+      s.addText(t, { x: x + 0.24, y, w: 3.9, h: 0.26, fontSize: 12.5, bold: true, color: C.text1,
+        valign: 'top', margin: 0, isTextBox: true });
+      s.addText(b, { x: x + 0.24, y: y + 0.25, w: 3.9, h: 0.46, fontSize: 10.5, color: C.text2,
+        valign: 'top', margin: 0, isTextBox: true });
+    });
+  });
+
+  s.addText('Each limitation on the left has the work that would close it on the right. Phase one of the roadmap '
+    + 'is where the first two come from.', {
+    x: M, y: 4.74, w: W - 2 * M, h: 0.3, fontSize: 11.5, italic: true, color: C.text2, isTextBox: true });
+  s.addNotes('Do not rush this one. Volunteering the limits is the strongest thing we do on rigour, and every '
+    + 'item on the left is answered on the right.');
+}
+
 pres.addSection({ title: 'Close' });
 {
   const s = pres.addSlide({ masterName: 'DARK', sectionTitle: 'Close' });
@@ -472,10 +513,6 @@ pres.addSection({ title: 'Close' });
       valign: 'top', margin: 0, isTextBox: true });
   });
 
-  s.addText('Honestly: this argues from published sources and the regulatory framework. It is not a validated '
-    + 'network study, and the advisor is a transparent recommender rather than a trained model.', {
-    x: M, y: 4.08, w: W - 2 * M, h: 0.5, fontSize: 11.5, italic: true, color: '8C9BAB', valign: 'top',
-    margin: 0, isTextBox: true });
   s.addNotes('Close on the contribution, the SDG fit, and the honest limit — in that order. Then take questions.');
 }
 
