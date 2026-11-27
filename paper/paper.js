@@ -188,7 +188,7 @@ const body = [
     'plug in on arrival, so the points switch on together, and they do so when that site is already at its own ' +
     'peak. Fig. 1 shows the shape of the problem: the dashed line is a feeder without electric vehicles, ' +
     'comfortably inside its limit, and the solid line is the same feeder once charging is added on top.'),
-  ...figure('fig1-mechanism.png', 3.0,
+  ...figure('fig1-mechanism.png', 2.9,
     'Fig. 1.  Why clustered arrivals are the difficulty. Charging lands on top of the site’s own peak rather than in the quiet hours, even though the energy could be delivered at any point while the vehicles are parked. A residential street peaks when people return, a workplace car park when they arrive, a depot at shift end — only the hour changes. Schematic.'),
   p('Measured coincidence factors for charging do fall as fleets grow, because arrivals spread over several hours ' +
     C('dtu') + '. That is an average over a large population, and it is the wrong statistic for the problem at hand. A ' +
@@ -345,13 +345,29 @@ const body = [
     'network could supply every charger at full power simultaneously, a controller asks how much capacity is free at ' +
     'this moment, and guarantees that the chargers it manages never collectively exceed it. Fig. 2 contrasts the ' +
     'two.', { noIndent: true }),
-  ...figure('fig2-framework.png', 3.0,
+  ...figure('fig2-framework.png', 2.9,
     'Fig. 2.  The change proposed. A static assessment must assume the worst case and so either wastes capacity or refuses a connection; a dynamic limit measures what is actually free and lets chargers share it.'),
-  p('This is a familiar idea in network engineering under the name of flexible or managed connection, and its appeal ' +
-    'here is that it changes the economics. A transformer that cannot accept ten more unmanaged chargers may well ' +
-    'accept thirty managed ones, because the managed set can be held collectively within whatever headroom exists at ' +
-    'each moment. Reinforcement is deferred rather than merely delayed, and connections that would have been refused ' +
-    'can be approved immediately.', { noIndent: true }),
+  p('This is the flexible or managed connection, familiar in network engineering, and its appeal here is economic: ' +
+    'a transformer that cannot accept ten more unmanaged points may well accept thirty managed ones, because the ' +
+    'managed set is held collectively within whatever headroom exists. Reinforcement is deferred rather than ' +
+    'delayed, and connections that would have been refused can be approved now.', { noIndent: true }),
+
+  h2('What this adds to existing practice'),
+  p('Parts of this are not new, and it is worth saying so. Least-laxity-first scheduling is standard, and ' +
+    'controlling charging against a low-voltage feeder limit was demonstrated by the Esprit system in the My ' +
+    'Electric Avenue trial a decade ago ' + C('mea') + ': it worked, and it did not become ordinary practice. Load ' +
+    'management is not unusual either — products sold today measure a site’s incoming supply and share what is ' +
+    'left among its points. But what those manage is one customer’s own connection, and that is a different ' +
+    'boundary from the one that binds: twenty customers can each stay inside their own supply while the ' +
+    'transformer they share goes over, because none of them measures it and none has standing to act on it. The ' +
+    'contribution is therefore threefold. The constraint is the shared transformer rather than the site. ' +
+    'Judgements about the asset are escalated to a named operator with a projection scored afterwards, which we ' +
+    'are not aware of any load-management product doing. And the regulatory counterpart, a managed-connection ' +
+    'class, is what turns the capability into capacity a utility can award. None of this requires changing the ' +
+    'instruments in Table I: the equipment stays IEC 61851 compliant under the same regulations, public stations ' +
+    'are still approved by DEWA, and tariffs are untouched. Only the basis of the connection assessment changes.',
+    { noIndent: true }),
+
   h2('How the controller works'),
   p('Fig. 3 shows the arrangement. It touches the network at two points, deliberately in different places: the ' +
     'controller senses at the transformer, through a meter on the low-voltage busbar that reads the whole feeder, ' +
@@ -364,7 +380,7 @@ const body = [
     'about it: it need not know why demand moved, only that it did. That robustness is the main argument for ' +
     'measuring locally rather than scheduling centrally, and it is consistent with findings that local control ' +
     'captures much of the benefit of central optimisation without its communication burden ' + C('richardson') + '.', { noIndent: true }),
-  ...figure('fig3-architecture.png', 3.0,
+  ...figure('fig3-architecture.png', 2.9,
     'Fig. 3.  The two loops. Below the line the protection loop runs every minute and never waits for a decision: measured headroom is shared among connected vehicles in order of urgency and applied as a current limit at each charge point. Above it the advisory layer works across whole days, proposing ranked options that only take effect once an operator approves them. The approved policy is the sole path from one into the other.'),
   p('The headroom is then shared among connected vehicles. Priority is given to whichever vehicle has least slack — ' +
     'the smallest margin between the time remaining before its declared departure and the time it would need to ' +
@@ -423,11 +439,10 @@ const body = [
     'discretionary judgement is logged against the person who made it.'),
 
   h2('Solar canopy and storage'),
-  p('The approach pairs naturally with photovoltaics, for which Dubai already provides a route in the Shams Dubai ' +
-    'programme. A shared canopy with a battery behind it can discharge when headroom is scarcest, widening the ' +
-    'limit the controller works within. Two cautions: solar output has often faded by the time arrivals cluster, ' +
-    'and storage sized for one site shaves a peak rather than removing it. Both widen the margin; neither ' +
-    'substitutes for coordination.', { noIndent: true }),
+  p('The approach pairs naturally with photovoltaics, for which Dubai provides a route in the Shams Dubai ' +
+    'programme: a shared canopy with a battery can discharge when headroom is scarcest. Two cautions, though. ' +
+    'Solar output has often faded by the time arrivals cluster, and storage sized for one site shaves a peak ' +
+    'rather than removing it. Both widen the margin; neither substitutes for coordination.', { noIndent: true }),
   h2('Supporting measures'),
   p([
     t('The dynamic limit is the core proposal, but several smaller measures complement it and some are worth ' +
@@ -448,13 +463,6 @@ const body = [
     t('A managed-connection category:', { italics: true }),
     t(' the regulatory counterpart to all of the above, discussed next.'),
   ], { noIndent: true }),
-  h2('Fit with the existing framework'),
-  p('Nothing here requires changing the instruments in Table I. Equipment remains IEC 61851 compliant under the ' +
-    'same technical regulations, public stations are still approved by DEWA, and tariffs are untouched. What ' +
-    'changes is the basis of the connection assessment: a managed-connection category, in which a charge point ' +
-    'that can demonstrate it will stay within an enforced limit is assessed against that limit rather than its ' +
-    'nameplate rating.', { noIndent: true }),
-
   h1('Discussion'),
   p('The benefit is spread across three parties, which is why the approach is practical. The operator defers ' +
     'reinforcement capital and gains sight of a load class currently invisible behind the meter. The customer ' +
@@ -469,13 +477,13 @@ const body = [
 
 
   h1('Limitations and Future Work'),
-  p('This paper argues from published sources and from the regulatory framework; it is not a validated network ' +
-    'study, and the benefit on any feeder would depend on its rating, impedance, customer mix and loading. ' +
-    'Questions remain open: declared departure times may be wrong; fairness across repeated days must be managed ' +
-    'so the same customers are not always last; voltage and phase imbalance can bind before thermal rating; and ' +
-    'the economics of a managed-connection category depend on reinforcement costs we have not estimated. Future ' +
-    'work begins with a load-flow study of a representative Dubai feeder, using measured ambient temperatures ' +
-    'rather than a reference value, and a hardware demonstration of the pilot loop.', { noIndent: true }),
+  p('This paper argues from published sources and the regulatory framework; it is not a validated network study, ' +
+    'and the benefit on any feeder depends on its rating, impedance, customer mix and loading. Questions remain ' +
+    'open: declared departure times may be wrong; fairness must be managed so the same customers are not always ' +
+    'last; voltage and phase imbalance can bind before thermal rating; and the economics of a managed-connection ' +
+    'class depend on reinforcement costs we have not estimated. Future work begins with a load-flow study of a ' +
+    'representative Dubai feeder, at measured ambient temperatures rather than a reference value, and a hardware ' +
+    'demonstration of the pilot loop.', { noIndent: true }),
   p('The advisory layer should be described accurately. It is a transparent recommender: it derives its options ' +
     'and projections from recorded history by stated rules, and learns only in that it measures its own ' +
     'projection error and corrects later estimates by it. It is not a trained model and we claim no validated ' +
