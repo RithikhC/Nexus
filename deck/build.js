@@ -229,26 +229,6 @@ pres.addSection({ title: 'The gap' });
 
 /* ================================================================ 6 */
 pres.addSection({ title: 'The approach' });
-{
-  const s = pres.addSlide({ masterName: 'CONTENT', sectionTitle: 'The approach' });
-  s.addText('From a static limit to a dynamic one', { placeholder: 'title' });
-  s.addText([
-    { text: 'Instead of asking whether the network could supply every charger at full power at once…',
-      options: { fontSize: 14, breakLine: true } },
-    { text: ' ', options: { fontSize: 9, breakLine: true } },
-    { text: '…ask how much capacity is free right now, and guarantee the chargers never exceed it.',
-      options: { fontSize: 14, bold: true, color: C.text1, breakLine: true } },
-    { text: ' ', options: { fontSize: 9, breakLine: true } },
-    { text: 'A transformer that cannot accept ten unmanaged chargers may well accept thirty managed ones. '
-          + 'Reinforcement is deferred, and connections that would have been refused can be approved now.',
-      options: { fontSize: 14 } },
-  ], { placeholder: 'body' });
-  s.addImage({ path: path.join(FIGS, 'fig2-framework.png'), x: 5.05, y: 1.65, w: 4.4, h: 1.66 });
-  s.addText('Static assessment vs. a measured, enforced envelope', {
-    x: 5.05, y: 3.38, w: 4.4, h: 0.26, fontSize: 10, italic: true, color: 'A7B2BF', isTextBox: true });
-  s.addNotes('This is a known idea in network engineering — the flexible or managed connection. '
-    + 'What is new is applying it to domestic charging, where it currently does not exist.');
-}
 
 /* ================================================================ 7 */
 {
@@ -303,6 +283,41 @@ pres.addSection({ title: 'The AI layer' });
 }
 
 /* ================================================================ 9 */
+pres.addSection({ title: 'What is new' });
+{
+  const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'What is new' });
+  s.addText('What is actually new here', { placeholder: 'title' });
+
+  card(s, { x: M, y: 1.18, w: W - 2 * M, h: 0.92, name: 'notnew', fill: 'F4F1F9', line: 'DDD6EF' });
+  s.addText('Not new, and we say so', { x: M + 0.25, y: 1.3, w: 3.2, h: 0.26, fontSize: 13, bold: true,
+    color: '6B4FA8', valign: 'top', margin: 0, isTextBox: true });
+  s.addText('Least-laxity-first scheduling is textbook, and controlling charging against a low-voltage feeder '
+    + 'limit was trialled by My Electric Avenue\u2019s Esprit system in 2013\u201315. The control idea is not our '
+    + 'contribution. It worked, and it never became standard practice.', {
+    x: M + 0.25, y: 1.58, w: W - 2 * M - 0.5, h: 0.46, fontSize: 11.5, color: C.text2, valign: 'top',
+    margin: 0, isTextBox: true });
+
+  const items = [
+    ['The boundary', 'Dynamic load management caps a site against its own main fuse. Nobody manages the '
+      + 'shared transformer across independent customers — and that is where the limit actually binds.'],
+    ['The decision', 'No load-management product escalates "this asset is deteriorating, here are three '
+      + 'options" to a named operator, with a projection that is scored afterwards against what happened.'],
+    ['The regulatory vehicle', 'Dubai has no managed-connection class, so a charge point that can prove it '
+      + 'stays within an enforced envelope is still assessed on its nameplate rating. We propose that class.'],
+  ];
+  items.forEach(([head, body], i) => {
+    const x = M + i * 3.08;
+    card(s, { x, y: 2.26, w: 2.85, h: 2.2, name: `new-${i}` });
+    disc(s, i + 1, x + 0.22, 2.46, 0.34, THEME.colors.accent1);
+    s.addText(head, { x: x + 0.22, y: 2.9, w: 2.45, h: 0.28, fontSize: 14, bold: true, color: C.text1,
+      valign: 'top', margin: 0, isTextBox: true });
+    s.addText(body, { x: x + 0.22, y: 3.2, w: 2.45, h: 1.12, fontSize: 11, color: C.text2,
+      valign: 'top', margin: 0, isTextBox: true });
+  });
+  s.addNotes('Say the first box out loud. Owning the prior art is what makes the other three credible, and it '
+    + 'pre-empts the obvious question before a judge gets to ask it.');
+}
+
 pres.addSection({ title: 'Demonstration' });
 {
   const s = pres.addSlide({ masterName: 'WIDE', sectionTitle: 'Demonstration' });
@@ -330,21 +345,6 @@ pres.addSection({ title: 'Demonstration' });
 }
 
 /* =============================================================== 10 */
-pres.addSection({ title: 'Close' });
-{
-  const s = pres.addSlide({ masterName: 'DARK', sectionTitle: 'Close' });
-  s.addText('The capacity is already in the ground', { placeholder: 'title' });
-  s.addText([
-    { text: 'What is missing is the coordination to use it — and nothing in this approach needs a new '
-          + 'standard, a new interface, or a replaced transformer.', options: { fontSize: 15, breakLine: true } },
-    { text: ' ', options: { fontSize: 10, breakLine: true } },
-    { text: 'Honestly: this argues from published sources and the regulatory framework. It is not a validated '
-          + 'network study, and the advisor is a transparent recommender rather than a trained model.',
-      options: { fontSize: 12.5, color: '8C9BAB', italic: true } },
-  ], { placeholder: 'body' });
-  s.addNotes('Close on the contribution and the honest limit. Then take questions.');
-}
-
 /* =============================================================== 11 */
 pres.addSection({ title: 'Deployment' });
 {
@@ -441,6 +441,43 @@ pres.addSection({ title: 'Business model' });
 }
 
 /* =============================================================== 13 */
+pres.addSection({ title: 'Close' });
+{
+  const s = pres.addSlide({ masterName: 'DARK', sectionTitle: 'Close' });
+  s.addText('The capacity is already in the ground', { x: M, y: 0.5, w: W - 2 * M, h: 0.8,
+    fontSize: 34, bold: true, color: 'FFFFFF', valign: 'middle', margin: 0, isTextBox: true });
+  s.addText('What is missing is the coordination to use it — and nothing here needs a new standard, a new '
+    + 'interface, or a replaced transformer.', {
+    x: M, y: 1.34, w: W - 2 * M, h: 0.46, fontSize: 14.5, color: 'E6ECF2', valign: 'top',
+    margin: 0, isTextBox: true });
+
+  const sdgs = [
+    ['SDG 9', 'Industry, innovation and infrastructure', 'Retrofitting existing infrastructure for greater '
+      + 'resource-use efficiency — the target this project sits squarely on.', true],
+    ['SDG 7', 'Affordable and clean energy', 'More charging served per asset, without the cost and carbon of '
+      + 'replacing it.', false],
+    ['SDG 11', 'Sustainable cities', 'Removes a constraint that would otherwise slow electrification in the '
+      + 'densest areas first.', false],
+  ];
+  sdgs.forEach(([tag, name, body, lead], i) => {
+    const x = M + i * 3.08;
+    card(s, { x, y: 2.0, w: 2.85, h: 1.9, name: `sdg-${i}`,
+      fill: lead ? '2F4A3C' : '2A3644', line: lead ? '3E6450' : '2A3644' });
+    s.addText(tag, { x: x + 0.22, y: 2.14, w: 2.4, h: 0.3, fontSize: 17, bold: true,
+      color: lead ? '8FD0A8' : 'F0A868', valign: 'top', margin: 0, isTextBox: true });
+    s.addText(name, { x: x + 0.22, y: 2.46, w: 2.4, h: 0.44, fontSize: 11.5, bold: true, color: 'FFFFFF',
+      valign: 'top', margin: 0, isTextBox: true });
+    s.addText(body, { x: x + 0.22, y: 2.92, w: 2.4, h: 0.86, fontSize: 10.5, color: 'A9B6C4',
+      valign: 'top', margin: 0, isTextBox: true });
+  });
+
+  s.addText('Honestly: this argues from published sources and the regulatory framework. It is not a validated '
+    + 'network study, and the advisor is a transparent recommender rather than a trained model.', {
+    x: M, y: 4.08, w: W - 2 * M, h: 0.5, fontSize: 11.5, italic: true, color: '8C9BAB', valign: 'top',
+    margin: 0, isTextBox: true });
+  s.addNotes('Close on the contribution, the SDG fit, and the honest limit — in that order. Then take questions.');
+}
+
 pres.addSection({ title: 'Thank you' });
 {
   const s = pres.addSlide({ masterName: 'DARK', sectionTitle: 'Thank you' });
@@ -490,7 +527,7 @@ pres.addSection({ title: 'Thank you' });
 }
 
 (async () => {
-  const out = path.join(__dirname, 'NEXUS-3.0-presentation.pptx');
+  const out = path.join(__dirname, process.env.OUT || 'NEXUS-3.0-presentation.pptx');
   await pres.writeFile({ fileName: out });
   await applyTheme(out, THEME);
   console.log('wrote ' + out);

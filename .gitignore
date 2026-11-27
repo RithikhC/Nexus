@@ -7,3 +7,7 @@ deck/node_modules/
 deck/render/
 deck/*.pdf
 deck/assets/demo.jpg
+deck/*-latest.pptx
+deck/_new.pptx
+deck/~$*
+paper/~$*
