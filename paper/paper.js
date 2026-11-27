@@ -129,23 +129,21 @@ const titleBlock = [
 ];
 
 const ABSTRACT =
-  'Electricity distribution networks are planned on diversity: the assumption that households do not all draw their ' +
-  'maximum power at the same moment. Electric vehicle charging weakens that assumption, because a home charger is ' +
-  'comparable in size to the rest of a dwelling and because drivers plug in within the same few evening hours. The ' +
-  'result is a local transformer carrying far more than it was sized for, with accelerated ageing and, eventually, ' +
-  'loss of supply to the street. The published thresholds are lower than intuition suggests: modelling for the US ' +
-  'Department of Energy puts distribution transformer limits as being exceeded at roughly 0.75 vehicles per home ' +
-  'at 6.6 kW charging, and a British network trial projected that 32% of low-voltage feeders would need ' +
-  'reinforcement once 40% to 70% of customers have electric vehicles. This paper examines the problem in the ' +
-  'context of the United Arab Emirates, where national policy targets half the vehicle fleet electrified by 2050. ' +
-  'It reviews the instruments governing charging today — the National Electric Vehicles Policy, Cabinet Decision ' +
-  'No. 81 of 2024, and DEWA’s technical and installation regulations — and identifies a specific gap: capacity is ' +
-  'protected by a static load assessment made once before connection, and domestic charging sits behind the meter ' +
-  'on a tariff banded by monthly volume rather than by time of day, so no signal exists to spread it. We propose converting that static limit into ' +
-  'a dynamic one. A controller measures the headroom remaining at the transformer, allocates it among connected ' +
-  'vehicles according to how little time each has before departure, and applies the result through the IEC 61851 ' +
-  'control pilot, optionally supported by a shared solar canopy and battery. The approach lets existing assets host ' +
-  'substantially more charging without replacement, and works within the regulatory framework already in force.';
+  'Electricity distribution networks are planned on diversity: the assumption that the loads on a feeder do not ' +
+  'reach their maxima at the same moment. Electric vehicle charging weakens that assumption wherever charge ' +
+  'points cluster — a street, a block, a workplace car park, a depot or a public hub — because each point is ' +
+  'large against the demand already at the site, and because vehicles arrive within the same narrow window. The ' +
+  'transformer then carries far more than it was sized for, ageing faster and eventually failing. The published ' +
+  'thresholds are low: modelling for the US Department of Energy puts distribution transformer limits as exceeded ' +
+  'at roughly 0.75 vehicles per dwelling at 6.6 kW charging, and a British trial projected that 32% of ' +
+  'low-voltage feeders would need reinforcement at 40% to 70% uptake. We examine this in the United Arab ' +
+  'Emirates, where policy targets half the fleet electrified by 2050, and identify a specific gap: capacity is ' +
+  'protected by a static assessment made once before connection, and charging behind the meter is priced by ' +
+  'monthly volume rather than by time of day, so nothing spreads it. We propose converting that static limit ' +
+  'into a dynamic one. A controller measures the headroom at the transformer, allocates it among connected ' +
+  'vehicles by how little time each has before departure, and applies the result on the IEC 61851 control pilot. ' +
+  'Above it, an advisory layer proposes network actions that only take effect once an operator approves them. ' +
+  'Existing assets can then host substantially more charging, within the framework already in force.';
 
 const KEYWORDS = 'Electric vehicles, smart grid, charging management, power distribution, demand diversity, DEWA, SDG 9.';
 
@@ -161,73 +159,77 @@ const body = [
     'new cars in 2024 and are projected above 40% by 2030 ' + C('gevo25') + '. The United Arab Emirates has set out a National ' +
     'Electric Vehicles Policy with the aim of half the vehicles on its roads being electric by 2050, alongside a ' +
     'substantial reduction in transport energy use ' + C('uaePolicy') + ', ' + C('moei') + '.', { noIndent: true }),
-  p('The difficulty is not generating the energy. It is that charging concentrates demand at the weakest point of the ' +
-    'system — the low-voltage feeder serving a residential street — and concentrates it at the hour when that feeder ' +
-    'is already busiest. This paper sets out why that happens, how large the problem is likely to become in the UAE, ' +
+  p('The difficulty is not generating the energy. It is that charging concentrates demand at the weakest point of ' +
+    'the system — the low-voltage feeder serving the site — and concentrates it at the hour when that feeder is ' +
+    'already busiest. The setting varies and so does the hour: a residential street peaks when people return, a ' +
+    'workplace car park when they arrive, a depot at shift end. The mechanism does not vary. ' +
+    'This paper sets out why that happens, how large the problem is likely to become in the UAE, ' +
     'what the current regulatory framework does and does not address, and a practical way to close the gap that ' +
     'requires no new standard and no new hardware interface.'),
 
   h1('Why Charging Stresses Distribution Networks'),
   h2('Networks are planned on diversity'),
   p('A distribution transformer is never sized for the sum of what its customers could draw. It is sized on ' +
-    'diversity: the long-standing observation that households reach their individual maxima at different moments, so ' +
-    'a transformer serving many homes never has to supply many simultaneous maxima. Diversity is the reason a feeder ' +
-    'rated far below its connected load has served residential streets reliably for decades, and it is assumed ' +
-    'throughout network planning practice.', { noIndent: true }),
-  p('That assumption is weaker in the Gulf. Residential demand here is dominated by air conditioning, which every ' +
-    'household runs against the same outdoor temperature, so a network whose load is largely thermal begins with ' +
+    'diversity: the long-standing observation that connected loads reach their individual maxima at different ' +
+    'moments, so a transformer serving many of them never has to supply many simultaneous maxima. Diversity is the ' +
+    'reason a feeder rated far below its connected load has served streets, blocks and car parks reliably for ' +
+    'decades, and it is assumed throughout network planning practice.', { noIndent: true }),
+  p('That assumption is weaker in the Gulf. Demand here is dominated by air conditioning, which every connected ' +
+    'customer runs against the same outdoor temperature, so a network whose load is largely thermal begins with ' +
     'less of the diversity that sizing depends on — before any vehicle is plugged in.'),
   h2('Charging weakens the assumption in two ways'),
-  p('First by size. Residential charging can draw more power than any other single household load ' + C('ieaV2G') + ': a ' +
-    'domestic charge point draws roughly as much as the rest of a dwelling combined, so adding one is not a ' +
-    'marginal change to a household’s demand but close to a doubling of its peak. No appliance introduced to the ' +
-    'home in the last century has had that effect, and the network was not planned for it.', { noIndent: true }),
-  p('Second, and more importantly, by correlation. Charging is not independent between households: people return from ' +
-    'work within the same two or three hours and plug in on arrival, so chargers switch on together, and they do so ' +
-    'precisely when cooking, lighting and air conditioning are already at their daily peak. Fig. 1 shows the shape of ' +
-    'the problem. The dashed line is a street without electric vehicles, comfortably inside its limit. The solid line ' +
-    'is the same street once charging is added on top of the evening peak.'),
+  p('First by size. A charge point is not a marginal addition to the site it serves. Charging can draw more power ' +
+    'than any other single load behind the same connection ' + C('ieaV2G') + ': a 7.4 kW single-phase point is comparable ' +
+    'to the entire existing demand of the dwelling, unit or bay it supplies, and a 22 kW three-phase point or a DC ' +
+    'rapid charger exceeds it several times over. No load has arrived at this size and this density together, and ' +
+    'the network was not planned for it.', { noIndent: true }),
+  p('Second, and more importantly, by correlation. Charging is not independent between connection points. Vehicles ' +
+    'reach a site within the same narrow window — commuters returning, staff arriving, a fleet back at depot — and ' +
+    'plug in on arrival, so the points switch on together, and they do so when that site is already at its own ' +
+    'peak. Fig. 1 shows the shape of the problem: the dashed line is a feeder without electric vehicles, ' +
+    'comfortably inside its limit, and the solid line is the same feeder once charging is added on top.'),
   ...figure('fig1-mechanism.png', 3.0,
-    'Fig. 1.  Why the evening is the difficulty, in a Gulf summer. Charging arrives on top of the household peak rather than in the quiet hours, and the overnight baseline stays high because cooling does not stop when the minimum is near 31 �C. Schematic.'),
-  p('Measured coincidence factors for domestic charging do fall as fleets grow, because arrivals spread over several ' +
-    'hours ' + C('dtu') + '. That is an average over a large population, and it is the wrong statistic for the problem at hand. ' +
-    'A transformer does not serve an average; it serves one street of perhaps twenty to forty homes, where the law ' +
-    'of large numbers is weak, charger power is high, and coincidence rises sharply whenever arrivals or start ' +
-    'times cluster. The system-wide figure can improve while individual feeders fail.', { noIndent: true }),
+    'Fig. 1.  Why clustered arrivals are the difficulty. Charging lands on top of the site’s own peak rather than in the quiet hours, even though the energy could be delivered at any point while the vehicles are parked. A residential street peaks when people return, a workplace car park when they arrive, a depot at shift end — only the hour changes. Schematic.'),
+  p('Measured coincidence factors for charging do fall as fleets grow, because arrivals spread over several hours ' +
+    C('dtu') + '. That is an average over a large population, and it is the wrong statistic for the problem at hand. A ' +
+    'transformer does not serve an average; it serves one site of perhaps twenty to forty connection points, where ' +
+    'the law of large numbers is weak, charge point power is high, and coincidence rises sharply whenever arrivals ' +
+    'cluster. The system-wide figure can improve while individual feeders fail.', { noIndent: true }),
 
   h2('The thresholds are far lower than intuition suggests'),
-  p('It is tempting to treat this as a problem for the 2040s, to be solved when electric vehicles are everywhere. ' +
-    'The published thresholds do not support that. Modelling of prototypical distribution feeders for the US ' +
-    'Department of Energy found that charging at 6.6 kW causes distribution transformer power limits to be exceeded ' +
-    'once adoption reaches about 0.75 vehicles per home — fewer than one car per household ' + C('pnnl') + '. The same study ' +
-    'found the threshold falls to roughly 0.25 vehicles per home at 19.2 kW charging, because feeder loading is ' +
-    'directly proportional to charging rate: faster chargers do not merely shift the problem forward, they multiply ' +
-    'it.', { noIndent: true }),
-  p('The proportion of the network involved is not marginal either. My Electric Avenue, an Ofgem-funded trial that ' +
-    'ran clusters of neighbouring electric vehicles on real British low-voltage circuits, projected from its ' +
-    'results that 32% of low-voltage feeders — some 312,000 circuits — would require intervention once 40% to 70% ' +
-    'of customers have electric vehicles, at a reinforcement cost of around £2.2 billion to 2050 ' + C('mea') + '. That is ' +
-    'roughly a third of a mature national distribution network requiring physical work, driven by one new load.'),
+  p('It is tempting to treat this as a problem for the 2040s. The published thresholds do not support that. ' +
+    'Modelling of prototypical feeders for the US Department of Energy found that charging at 6.6 kW exceeds ' +
+    'distribution transformer power limits ' +
+    'once adoption reaches about 0.75 vehicles per dwelling ' + C('pnnl') + '. The same study found the threshold falls to ' +
+    'roughly 0.25 at 19.2 kW, because feeder loading is directly proportional to charging rate: faster points do ' +
+    'not shift the problem forward, they multiply it. That study expresses its threshold per dwelling because it ' +
+    'modelled residential feeders, but the quantity that governs is the ratio of connected charge point power to ' +
+    'the transformer’s rating — so the threshold is reached with proportionally fewer points wherever those points ' +
+    'are larger, as they are at workplace, depot and public sites.', { noIndent: true }),
+  p('The proportion of the network involved is not marginal either. My Electric Avenue, an Ofgem-funded trial on ' +
+    'real British low-voltage circuits, projected that 32% of feeders — some 312,000 circuits — would require ' +
+    'intervention once 40% to 70% of customers have electric vehicles, at a reinforcement cost of around ' +
+    '£2.2 billion to 2050 ' + C('mea') + '. Roughly a third of a mature national network, driven by one new load.'),
 
   p('Both studies were conducted in temperate climates, which makes their figures optimistic here rather than ' +
     'conservative. A transformer’s rating is defined at a reference ambient, and IEC 60076-7 relates load, ' +
     'ambient temperature and the rate at which insulation ages ' + C('iec60076') + '. WMO normals for Dubai International ' +
     'give an August mean daily maximum of 41.9 °C and a mean minimum of 31.5 °C ' + C('wmoDubai') + ': the overnight low ' +
-    'here approaches the daytime high where those thresholds were measured, and because cooling runs all night ' +
-    'against it, the valley into which charging must be moved is shallower too.'),
+    'here approaches the daytime high where those thresholds were measured, and because cooling runs against it ' +
+    'continuously, the quiet period into which charging must be moved is shallower too.'),
   h2('What is coming, and at what scale'),
-  p('Dubai’s peak electricity demand reached 11,391 MW in 2025, about 5.8% above the previous year ' + C('dewaStats') + '. That growth ' +
-    'is being driven by population and economic activity, before significant electrification of transport. Against ' +
-    'this, national policy targets half the vehicle fleet electrified by 2050 ' + C('uaePolicy') + '. If a substantial share of those ' +
-    'vehicles charge at home, and if they charge on arrival, the additional demand does not spread itself evenly ' +
-    'across the day: it lands in the evening window, on thousands of low-voltage feeders simultaneously.', { noIndent: true }),
+  p('Dubai’s peak demand reached 11,391 MW in 2025, about 5.8% above the previous year ' + C('dewaStats') + ' — growth driven ' +
+    'by population and economic activity, before any significant electrification of transport. Against ' +
+    'this, national policy targets half the vehicle fleet electrified by 2050 ' + C('uaePolicy') + '. If those vehicles charge ' +
+    'on arrival, the additional demand does not spread itself across the day: it lands in a narrow window at each ' +
+    'site, on thousands of low-voltage feeders.', { noIndent: true }),
   p('The consequences differ by scale. Locally, sustained overloading is first a thermal problem and only later a ' +
-    'visible one: insulation ageing accelerates sharply with winding temperature, so repeated evening excursions ' +
-    'consume transformer life for months or years before anything is noticed, and the failure, when it comes, ' +
-    'arrives without warning and takes the whole street’s supply with it. The asset is degraded silently and the ' +
-    'cost is paid twice, once in shortened life and once in unplanned replacement. Hosting capacity also varies ' +
+    'visible one: insulation ageing accelerates sharply with winding temperature, so repeated excursions consume ' +
+    'transformer life for months or years before anything is noticed, and the failure, when it comes, arrives ' +
+    'without warning and takes every customer behind it with it. The asset is degraded silently and paid for ' +
+    'twice, once in shortened life and once in unplanned replacement. Hosting capacity also varies ' +
     'enormously between feeders, so the constraint binds unevenly and unpredictably: a meaningful fraction of ' +
-    'residential networks cannot accept significant charging without a limit being violated ' + C('barbosa') + ', and the ' +
+    'low-voltage networks cannot accept significant charging without a limit being violated ' + C('barbosa') + ', and the ' +
     'utility generally cannot tell which feeders those are until something gives.'),
   p('At system scale the bar is higher. A power system holds reserve against the loss of its largest generating ' +
     'unit, and a sudden demand step is equivalent to such a loss — but ordinary arrivals produce a ramp, which ' +
@@ -254,11 +256,11 @@ const body = [
   p('Domestic charging is treated differently, and the difference matters. Electricity used to charge a vehicle at ' +
     'home is added to the ordinary DEWA bill at standard residential rates ' + C('dewaTariff') + '. Those rates are a slab tariff ' +
     'banded by monthly consumption, rising from AED 0.23 per kWh to 0.38 above 6,000 kWh a month ' + C('dewaSlab') + '. The ' +
-    'bands depend on how much a household uses, not on when it uses it.'),
-  p('The consequence is direct: nothing in Dubai today would move domestic charging off the evening peak. A ' +
-    'household pays the same at 19:00 as at 03:00, so the off-peak timer — the main mitigation in markets with ' +
-    'time-of-use tariffs — is unavailable here, and as Section II noted it replaces a diverse peak with a ' +
-    'synchronised one where it is.'),
+    'bands depend on how much a customer uses, not on when they use it.'),
+  p('The consequence is direct: nothing in Dubai today would move charging behind a customer’s meter away from the ' +
+    'hours it is least wanted. A kilowatt-hour costs the same at 19:00 as at 03:00, so the off-peak timer — the ' +
+    'main mitigation in markets with time-of-use tariffs — is unavailable here, and as Section II noted it ' +
+    'replaces a diverse peak with a synchronised one where it is available.'),
   h2('Technical and connection regulation'),
   p('DEWA’s EV Charging Technical Regulations require that charging installations follow the IET Code of Practice ' +
     'for electric vehicle charging equipment installation and BS 7671, with EV charge points also addressed in the ' +
@@ -321,12 +323,12 @@ const body = [
     t(', and the load assessment governs what may be '),
     t('connected', { italics: true }),
     t(', but nothing governs what may be '),
-    t('drawn at seven in the evening', { italics: true }),
+    t('drawn the moment they all arrive', { italics: true }),
     t('. A compliant 7.4 kW installation is entitled to its full 7.4 kW at the worst possible moment, and in Dubai ' +
       'there is no tariff signal to discourage it. Because charging is a continuous load, wiring practice also sizes ' +
       'a charger’s own circuit at its full rated current rather than a diversified one, which is why each ' +
-      'additional charge point consumes headroom so quickly. The street’s transformer is therefore exposed to ' +
-      'whatever its customers happen to do simultaneously.'),
+      'additional charge point consumes headroom so quickly. The transformer is therefore exposed to whatever ' +
+      'its customers happen to do at the same moment.'),
   ]),
   p('One further instrument matters here, because the approach proposed below places a decision-support system ' +
     'inside a utility workflow. The UAE Charter for the Development and Use of Artificial Intelligence sets out ' +
@@ -354,7 +356,8 @@ const body = [
   p('Fig. 3 shows the arrangement. It touches the network at two points, deliberately in different places: the ' +
     'controller senses at the transformer, through a meter on the low-voltage busbar that reads the whole feeder, ' +
     'but it acts at the charge points, issuing one current limit per point. Nothing between those two points is ' +
-    'instrumented and no household appliance is controlled, which is what keeps the scheme deployable. ' +
+    'instrumented, and no load other than charging is controlled — not an appliance, not a tenant’s cooling, ' +
+    'not a building’s plant. That restraint is what keeps the scheme deployable. ' +
     'Loading is measured at the transformer; subtracting the charging the controller is ' +
     'itself commanding gives the demand from everything else, and the difference between that and the safe limit is ' +
     'the headroom available. Because this quantity is measured rather than forecast, the controller cannot be wrong ' +
@@ -362,11 +365,11 @@ const body = [
     'measuring locally rather than scheduling centrally, and it is consistent with findings that local control ' +
     'captures much of the benefit of central optimisation without its communication burden ' + C('richardson') + '.', { noIndent: true }),
   ...figure('fig3-architecture.png', 3.0,
-    'Fig. 3.  The two loops. Below the line the protection loop runs every minute and never waits for a decision: measured headroom is shared among connected vehicles in order of urgency and applied as a current limit at each charge point. Above it the advisory layer works across whole evenings, proposing ranked options that only take effect once an operator approves them. The approved policy is the sole path from one into the other.'),
+    'Fig. 3.  The two loops. Below the line the protection loop runs every minute and never waits for a decision: measured headroom is shared among connected vehicles in order of urgency and applied as a current limit at each charge point. Above it the advisory layer works across whole days, proposing ranked options that only take effect once an operator approves them. The approved policy is the sole path from one into the other.'),
   p('The headroom is then shared among connected vehicles. Priority is given to whichever vehicle has least slack — ' +
     'the smallest margin between the time remaining before its declared departure and the time it would need to ' +
     'finish charging at full power. Because that margin is recalculated continuously, a vehicle held back early in ' +
-    'the evening rises in priority as its departure approaches, so no vehicle can be indefinitely starved. The ' +
+    'the arrival peak rises in priority as its departure approaches, so no vehicle can be indefinitely starved. The ' +
     'quantities required are modest: state of charge, energy needed and intended departure time, all of which the ' +
     'charging session either knows or can be told.', { noIndent: true }),
   h2('Enforcement'),
@@ -380,55 +383,51 @@ const body = [
     'spreading an unusably thin allocation across all of them.', { noIndent: true }),
   p('For a networked charge point the same instruction can instead be carried by OCPP, whose Smart Charging profile ' +
     'sets a limit in amperes or watts on an individual point ' + C('ocpp') + '. The routes are complementary — a local controller ' +
-    'behind a domestic meter, OCPP for stations already managed centrally — and both end at the same control pilot.'),
+    'behind a single customer’s meter, OCPP where a site or operator is already managed centrally — and both end ' +
+    'at the same control pilot.'),
   h2('A decision layer, with a human holding the pen'),
-  p('Holding a feeder under its limit is necessary but not sufficient. A controller that quietly absorbs a worsening ' +
-    'problem every evening is also concealing it: the operator sees no alarm, the asset ages, and the first visible ' +
-    'sign is a failure. What the utility needs in addition is a judgement about what to do next — tighten the cap, ' +
-    'recruit the chargers still outside the scheme, or accept that this unit now warrants inspection and ' +
-    'reinforcement. Those are decisions about capital, customers and risk, and they are not the controller’s to ' +
-    'make.', { noIndent: true }),
+  p('Holding a feeder under its limit is necessary but not sufficient. A controller that quietly absorbs a ' +
+    'worsening problem is also concealing it: no alarm sounds, the asset ages, and the first visible sign is a ' +
+    'failure. The utility also needs a judgement about what to do next — tighten the cap, recruit the points still ' +
+    'outside the scheme, or accept that this unit warrants inspection and reinforcement. Those are decisions about ' +
+    'capital, customers and risk, and they are not the controller’s to make.', { noIndent: true }),
   p('We therefore separate the system into two loops running on different clocks, shown above and below the line in ' +
-    'Fig. 3. The protection loop is deterministic, acts every minute and never waits for authorisation, because a ' +
-    'transformer cannot be left overloaded while an operator is away from the desk. Above it sits an advisory layer ' +
-    'that touches no charger at all. It reads completed evenings, identifies the pattern — how often the limit was ' +
+    'Fig. 3. The protection loop is deterministic, acts every minute and never waits for authorisation: a ' +
+    'transformer cannot be left overloaded while an operator is away from the desk. Above it sits a layer that ' +
+    'touches no charger at all. It reads completed days and identifies the pattern — how often the limit was ' +
     'approached, what share of the load was beyond the controller’s reach, whether the trend is worsening — and ' +
     'presents the operator with a small set of ranked options. Each carries the reasoning behind it, a projected ' +
     'effect, the cost and lead time, and the risk of taking it. Nothing is applied until a person approves it, and ' +
     'an approval changes only the policy the protection loop then enforces.'),
-  p('Two properties make this more than a confirmation dialogue. The first is that the layer must be able to say ' +
-    'when an option will not help: if most of the excess is being drawn by chargers that have never been enrolled, ' +
-    'no cap can reach it, and saying so is more useful than proposing it. The second is that every projection is ' +
-    'recorded and later compared with what actually happened, so the operator can see whether this system has been ' +
-    'reliable before trusting its next suggestion — and the layer corrects its own estimates by that error. A ' +
-    'recommender that cannot be audited is of little use for a decision about an asset worth more than the ' +
-    'scheme that manages it.'),
+  p('Two properties make this more than a confirmation dialogue. It must be able to say when an option will not ' +
+    'help: if most of the excess is drawn by points never enrolled, no cap can reach it, and saying so is more ' +
+    'useful than proposing it. And every projection is recorded and later compared with what happened, so the ' +
+    'operator can see whether the system has been reliable before trusting its next suggestion, while the layer ' +
+    'corrects its own estimates by that error. A recommender that cannot be audited is of little use for a ' +
+    'decision about an asset of this value.'),
   p('None of this is a novel interaction. Restoration functions in an advanced distribution management system are ' +
-    'already commissioned this way. GE Vernova’s D400-DA, in what it calls Operator Assisted Mode, "will first ask ' +
-    'for confirmation from the operator before taking any action", and "if the operator does not agree with the ' +
-    'recommended action, the D400-DA will calculate the next optimal scenario and propose that to the operator" ' +
-    C('geD400') + '. Oracle’s network management system provides a manual mode in which restoration solutions are ' +
-    'generated automatically but executed by the operator ' + C('oracleNms') + '. The pattern extends to how such functions ' +
-    'are introduced: utilities commonly run them operator-assisted first and move to automatic only once ' +
-    'confidence has been earned. What we propose is that the same arrangement be applied to a decision the ' +
-    'industry does not currently make at all.'),
-  p('The signal path is equally conventional, which matters because nothing here requires a new interface. ' +
-    'Transformer loading already reaches a control centre over established telecontrol protocols — DNP3, ' +
-    'standardised as IEEE 1815 ' + C('dnp3') + ', or IEC 60870-5-104 ' + C('iec104') + ' — with IEC 61850 inside the substation. The ' +
-    'advisory function would sit in the ADMS beside FLISR, exchanging data through the IEC 61968 Common ' +
-    'Information Model ' + C('iec61968') + ', which defines application-level message interfaces and is a separate layer from ' +
-    'the telecontrol protocols rather than an extension of them. The approved limit then travels outward as an ' +
-    'OCPP profile applied on the IEC 61851-1 pilot. Every link is a standard already deployed.'),
+    'already commissioned this way: GE Vernova’s D400-DA, in Operator Assisted Mode, "will first ask for ' +
+    'confirmation from the operator before taking any action", and if the operator disagrees it "will calculate ' +
+    'the next optimal scenario and propose that to the operator" ' + C('geD400') + '; Oracle’s network management system ' +
+    'offers the equivalent manual mode ' + C('oracleNms') + '. Utilities commonly run such functions operator-assisted ' +
+    'first and move to automatic only once confidence has been earned. We propose the same arrangement for a ' +
+    'decision the industry does not currently make at all.'),
+  p('The signal path is equally conventional, which matters because nothing here needs a new interface. ' +
+    'Transformer loading already reaches a control centre over DNP3, standardised as IEEE 1815 ' + C('dnp3') + ', or ' +
+    'IEC 60870-5-104 ' + C('iec104') + ', with IEC 61850 inside the substation. The advisory function would sit in the ADMS ' +
+    'beside FLISR, exchanging data through the IEC 61968 Common Information Model ' + C('iec61968') + ' — an ' +
+    'application-level layer, not an extension of those telecontrol protocols. The approved limit then travels ' +
+    'outward as an OCPP profile applied on the IEC 61851-1 pilot. Every link is already deployed.'),
   p('The division also answers the obvious objection — who is accountable when it is wrong. The automatic part is ' +
     'bounded, deterministic and does only what the standards already permit a charge point to be told; every ' +
     'discretionary judgement is logged against the person who made it.'),
 
   h2('Solar canopy and storage'),
   p('The approach pairs naturally with photovoltaics, for which Dubai already provides a route in the Shams Dubai ' +
-    'programme. A shared canopy with a battery behind it can discharge into the evening window when headroom is ' +
-    'scarcest, widening the limit the controller works within. Two cautions, though: solar output has largely ' +
-    'faded by the evening peak, and storage sized for a street shaves a peak rather than removing it. Both widen ' +
-    'the margin; neither substitutes for coordination.', { noIndent: true }),
+    'programme. A shared canopy with a battery behind it can discharge when headroom is scarcest, widening the ' +
+    'limit the controller works within. Two cautions: solar output has often faded by the time arrivals cluster, ' +
+    'and storage sized for one site shaves a peak rather than removing it. Both widen the margin; neither ' +
+    'substitutes for coordination.', { noIndent: true }),
   h2('Supporting measures'),
   p([
     t('The dynamic limit is the core proposal, but several smaller measures complement it and some are worth ' +
@@ -442,9 +441,9 @@ const body = [
       'costs nothing and removes the synchronised step a common tariff hour would create ' + C('touPilot') + '. '),
     t('A time-of-use element:', { italics: true }),
     t(' price alone cannot guarantee a limit, and a single shared off-peak hour makes matters worse, but ' +
-      'staggered bands would give households a reason to accept managed charging. '),
+      'staggered bands would give customers a reason to accept managed charging. '),
     t('Vehicle-to-grid:', { italics: true }),
-    t(' a fleet that can export rather than merely modulate would become evening support, though this needs ' +
+    t(' a fleet that can export rather than merely modulate would become network support, though this needs ' +
       'bidirectional chargers and a settlement framework, so we treat it as a later extension. '),
     t('A managed-connection category:', { italics: true }),
     t(' the regulatory counterpart to all of the above, discussed next.'),
@@ -458,10 +457,10 @@ const body = [
 
   h1('Discussion'),
   p('The benefit is spread across three parties, which is why the approach is practical. The operator defers ' +
-    'reinforcement capital and gains visibility of a load class currently invisible behind the meter. The customer ' +
-    'connects now rather than after reinforcement and still leaves charged, because an overnight stop offers more ' +
-    'time than the charging needs. The wider system benefits because a managed population is by construction ' +
-    'de-synchronised.', { noIndent: true }),
+    'reinforcement capital and gains sight of a load class currently invisible behind the meter. The customer ' +
+    'connects now rather than after reinforcement and still leaves charged, because the time parked exceeds the ' +
+    'time needed. The wider system benefits because a managed population is, by construction, de-synchronised.',
+    { noIndent: true }),
   p('This speaks directly to UN Sustainable Development Goal 9 and its call for infrastructure upgraded for greater ' +
     'resource-use efficiency: getting more electrification from assets already in the ground is faster, cheaper ' +
     'and less carbon-intensive than replacing them.'),
@@ -473,25 +472,26 @@ const body = [
   p('This paper argues from published sources and from the regulatory framework; it is not a validated network ' +
     'study, and the benefit on any feeder would depend on its rating, impedance, customer mix and loading. ' +
     'Questions remain open: declared departure times may be wrong; fairness across repeated days must be managed ' +
-    'so the same households are not always last; voltage and phase imbalance can bind before thermal rating; and ' +
+    'so the same customers are not always last; voltage and phase imbalance can bind before thermal rating; and ' +
     'the economics of a managed-connection category depend on reinforcement costs we have not estimated. Future ' +
     'work begins with a load-flow study of a representative Dubai feeder, using measured ambient temperatures ' +
     'rather than a reference value, and a hardware demonstration of the pilot loop.', { noIndent: true }),
-  p('The advisory layer should be described accurately. It is a transparent recommender: it derives its options and ' +
-    'projections from recorded history by stated rules, and the only sense in which it learns is that it measures ' +
-    'its own projection error and corrects later estimates by it. It is not a trained model and we claim no ' +
-    'validated one. That is defensible for a first system, since an operator signing off work on an asset needs ' +
-    'to see why a recommendation was made, but a larger deployment is exactly where a learned model could reach ' +
-    'options a rule set would not. The division of responsibility would not change.'),
+  p('The advisory layer should be described accurately. It is a transparent recommender: it derives its options ' +
+    'and projections from recorded history by stated rules, and learns only in that it measures its own ' +
+    'projection error and corrects later estimates by it. It is not a trained model and we claim no validated ' +
+    'one. That is defensible for a first system, since an operator signing off work on an asset needs to see why ' +
+    'a recommendation was made — though a larger deployment is where a learned model could reach options a rule ' +
+    'set would not, without changing who decides.'),
 
   h1('Conclusion'),
   p('Electric vehicle charging overloads distribution transformers because it is correlated, not because the energy ' +
-    'it requires is unavailable. A car home in the evening and gone by morning has far longer than it needs; the ' +
-    'difficulty is that every car wants the same hour, and in this climate it wants it on a network whose cooling ' +
-    'load is already correlated and whose transformers have least margin precisely when demand is highest. The ' +
+    'it requires is unavailable. A vehicle parked for the night, or for a working day, has far longer than it ' +
+    'needs; the difficulty is that every vehicle wants the same hour, and in this climate it wants it on a ' +
+    'network whose cooling load is already correlated and whose transformers have least margin precisely when ' +
+    'demand is highest. The ' +
     'UAE framework governs equipment, approval and public charging prices comprehensively, but protects capacity ' +
     'through a single static assessment and prices domestic electricity by monthly volume rather than time of ' +
-    'day — so nothing spreads domestic charging, and nothing responds when a street draws more than its ' +
+    'day — so nothing spreads charging behind the meter, and nothing responds when a site draws more than its ' +
     'transformer can take.', { noIndent: true }),
   p('Converting that static limit into a dynamic one closes the gap without new standards or new hardware ' +
     'interfaces. A controller that measures the headroom at the transformer, shares it among vehicles in order of ' +

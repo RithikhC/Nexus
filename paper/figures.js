@@ -25,16 +25,16 @@ async function png(name, svg, inchesWide) {
   console.log(`  ${name}  ${m.width}x${m.height}`);
 }
 
-/* ------------- Fig 1: why the evening is the problem (schematic) ------- */
+/* --------- Fig 1: why clustered arrivals are the problem (schematic) ---- */
 function mechanism() {
   const w = 1500, h = 620;
   const m = { l: 120, r: 40, t: 96, b: 90 };
   const pw = w - m.l - m.r, ph = h - m.t - m.b;
   const TOP = 1.55;                              // the axis reaches 1.55x the limit so the overload fits
-  const X = (u) => m.l + u * pw;                 // u in 0..1 across the evening/night
+  const X = (u) => m.l + u * pw;                 // u in 0..1 from arrival to departure
   const Y = (v) => m.t + (1 - v / TOP) * ph;     // v as a multiple of the safe limit
 
-  // A Gulf summer evening. The baseline is high and stays high: air conditioning
+  // A Gulf summer day. The baseline is high and stays high: air conditioning
   // does not stop overnight, so the valley charging relies on is shallow.
   const houseAt = (u) => 0.46 + 0.20 * Math.exp(-Math.pow((u - 0.17) / 0.20, 2));
   // charging switched on as people arrive, then held until batteries fill
@@ -67,16 +67,16 @@ function mechanism() {
     s += `<text x="${X((over[0] + over[over.length - 1]) / 2)}" y="${m.t - 16}" font-size="25" font-weight="bold" fill="${RED}" text-anchor="middle">hours spent over the limit</text>`;
   }
 
-  s += `<text x="${X(0.02)}" y="${Y(0) + 38}" font-size="25" fill="${INK}">people arrive home</text>`;
-  s += `<text x="${X(0.97)}" y="${Y(0) + 38}" font-size="25" fill="${INK}" text-anchor="end">they leave again</text>`;
-  s += `<text x="${m.l + pw / 2}" y="${h - 18}" font-size="27" fill="${INK}" text-anchor="middle">evening → overnight → morning</text>`;
-  s += `<text transform="translate(38 ${m.t + ph / 2}) rotate(-90)" font-size="27" fill="${INK}" text-anchor="middle">load on the street’s transformer</text>`;
+  s += `<text x="${X(0.02)}" y="${Y(0) + 38}" font-size="25" fill="${INK}">vehicles arrive</text>`;
+  s += `<text x="${X(0.97)}" y="${Y(0) + 38}" font-size="25" fill="${INK}" text-anchor="end">vehicles leave</text>`;
+  s += `<text x="${m.l + pw / 2}" y="${h - 18}" font-size="27" fill="${INK}" text-anchor="middle">arrivals  →  time parked  →  departures</text>`;
+  s += `<text transform="translate(38 ${m.t + ph / 2}) rotate(-90)" font-size="27" fill="${INK}" text-anchor="middle">load on the site’s transformer</text>`;
 
   // legend
   s += `<line x1="${m.l}" x2="${m.l + 38}" y1="34" y2="34" stroke="${GREY}" stroke-width="4" stroke-dasharray="13 8"/>`;
-  s += `<text x="${m.l + 48}" y="43" font-size="26" fill="${INK}">homes only</text>`;
-  s += `<line x1="${m.l + 300}" x2="${m.l + 338}" y1="34" y2="34" stroke="${RED}" stroke-width="5"/>`;
-  s += `<text x="${m.l + 348}" y="43" font-size="26" fill="${INK}">homes and cars charging together</text>`;
+  s += `<text x="${m.l + 48}" y="43" font-size="26" fill="${INK}">site demand without charging</text>`;
+  s += `<line x1="${m.l + 420}" x2="${m.l + 458}" y1="34" y2="34" stroke="${RED}" stroke-width="5"/>`;
+  s += `<text x="${m.l + 468}" y="43" font-size="26" fill="${INK}">with charge points added</text>`;
 
   return s + '</svg>';
 }
@@ -172,7 +172,7 @@ function architecture() {
   b += `<path d="M1300 680 V 790 H 185 V 686" fill="none" stroke="${INK}" stroke-width="3.2" stroke-dasharray="11 7" marker-end="url(#a)"/>`;
   txt(742, 822, 'the change in load is measured, and the loop repeats', { size: 24, fill: MUTED });
 
-  // and the completed evening is what the advisory layer later reads
+  // and the completed day is what the advisory layer later reads
   b += `<path d="M185 790 H 24 V 135 H 34" fill="none" stroke="${PURPLE}" stroke-width="3" stroke-dasharray="7 7" marker-end="url(#ap)"/>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" ${FONT}>
