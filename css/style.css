@@ -263,19 +263,11 @@ main { max-width: 1120px; margin: 0 auto; padding: 0 20px 64px; }
 }
 .advnote b { color: var(--ink); }
 
-.advgrid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 2fr); gap: 16px; }
 .advcol h3 {
   margin: 0 0 9px; font-size: 11px; font-weight: 650; letter-spacing: .05em;
   text-transform: uppercase; color: var(--dim);
 }
 
-.advfacts { display: flex; flex-direction: column; gap: 6px; }
-.advfacts div {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-  background: var(--panel2); border: 1px solid var(--line); border-radius: 8px;
-  padding: 7px 11px; font-size: 12.5px; color: var(--muted);
-}
-.advfacts b { font-size: 14px; color: var(--ink); font-variant-numeric: tabular-nums; }
 
 .advhead {
   font-size: 13px; color: var(--muted); margin-bottom: 11px; line-height: 1.5;
@@ -344,9 +336,6 @@ main { max-width: 1120px; margin: 0 auto; padding: 0 20px 64px; }
   border-radius: 5px; padding: 2px 6px;
 }
 
-@media (max-width: 920px) {
-  .advgrid { grid-template-columns: 1fr; }
-}
 .advopt .meta .proj.weak { color: var(--dim); background: var(--panel2); border-color: var(--line); font-weight: 500; }
 
 /* the verified real-world grounding, and the protocol path */

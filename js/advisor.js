@@ -253,16 +253,6 @@ window.Advisor = (function () {
       : f.seen === 0 ? 'watching' : 'no action needed';
     el('advState').className = 'state' + (A.pending ? ' warn' : f.seen ? ' ok' : '');
 
-    // what it is reasoning from
-    el('advFacts').innerHTML = [
-      ['Evenings observed', f.seen || '—'],
-      ['Went over the limit', f.seen ? `${f.breached} of ${f.seen}` : '—'],
-      ['Worst load seen', f.worst ? f.worst + '%' : '—'],
-      ['Chargers under control', `${pct(A.policy.enrolled)}%`],
-      ['Cap being held', `${pct(A.policy.cap)}% of nameplate`],
-      ['Trend', f.seen >= 2 ? f.trend : 'needs 2 evenings'],
-    ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
-
     // the options, or why there are none
     const box = el('advOpts');
     if (!A.pending) {
