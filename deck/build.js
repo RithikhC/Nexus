@@ -338,7 +338,8 @@ pres.addSection({ title: 'Demonstration' });
     s.addText(label, { x: 6.65, y: y + 0.44, w: 2.85, h: 0.44, fontSize: 11.5, color: C.text2,
       valign: 'top', margin: 0, isTextBox: true });
   });
-  s.addText('Same cars, same energy, same night — only the timing changes.   rithikhc.github.io/Nexus', {
+  s.addText('Same cars, same energy, same night — only the timing changes.   A teaching model of one site, '
+    + 'not a validated network study.   rithikhc.github.io/Nexus', {
     x: M, y: 4.45, w: W - 2 * M, h: 0.4, fontSize: 12, color: C.text2, isTextBox: true });
   s.addNotes('A teaching model of one street on a Dubai summer evening, not a validated network study. '
     + 'Live at the link — press play and it runs the evening in twenty seconds.');
@@ -488,8 +489,12 @@ pres.addSection({ title: 'Thank you' });
     margin: 0, isTextBox: true });
 
   card(s, { x: M, y: 1.62, w: W - 2 * M, h: 3.4, name: 'refcard', fill: 'FFFFFF', line: 'FFFFFF' });
-  s.addText('Sources for every figure in this deck', {
-    x: M + 0.25, y: 1.78, w: 8, h: 0.26, fontSize: 12, bold: true, color: THEME.colors.dk1,
+  s.addText('How we got here, and every source behind it', {
+    x: M + 0.25, y: 1.76, w: 5.6, h: 0.26, fontSize: 12, bold: true, color: THEME.colors.dk1,
+    valign: 'top', margin: 0, isTextBox: true });
+  s.addText('Argued from published studies, standards and regulation — not from our own simulation. '
+    + 'Every quantitative claim traces to a source below; the one figure that is ours is labelled as ours.', {
+    x: M + 0.25, y: 2.02, w: 8.9, h: 0.3, fontSize: 10, italic: true, color: '6B7886',
     valign: 'top', margin: 0, isTextBox: true });
 
   const colA = [
@@ -509,7 +514,7 @@ pres.addSection({ title: 'Thank you' });
       + 'UAE Charter for the Development and Use of Artificial Intelligence.'],
   ];
   const putRefs = (list, x) => list.forEach(([label, src], i) => {
-    const y = 2.14 + i * 0.92;
+    const y = 2.42 + i * 0.86;
     s.addText(label, { x, y, w: 4.2, h: 0.24, fontSize: 10.5, bold: true, color: THEME.colors.accent2,
       valign: 'top', margin: 0, isTextBox: true });
     s.addText(src, { x, y: y + 0.22, w: 4.2, h: 0.66, fontSize: 10, color: '4A5A6B',
@@ -518,9 +523,9 @@ pres.addSection({ title: 'Thank you' });
   putRefs(colA, M + 0.25);
   putRefs(colB, M + 4.72);
 
-  s.addText('The 153% and 87% on the demonstration slide are from our own teaching model of one street, '
-    + 'not a measurement and not from any source above.', {
-    x: M + 0.25, y: 4.68, w: 8.9, h: 0.26, fontSize: 10, italic: true, color: '7A8794',
+  s.addText('The 153% and 87% on the demonstration slide are from our own teaching model of one street — not a '
+    + 'measurement, and not from any source above.', {
+    x: M + 0.25, y: 4.74, w: 8.9, h: 0.26, fontSize: 10, italic: true, color: '7A8794',
     valign: 'top', margin: 0, isTextBox: true });
   s.addNotes('Leave this up during questions. Everything quantitative in the talk is sourced here, and the one '
     + 'thing that is ours is labelled as ours.');
