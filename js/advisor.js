@@ -112,11 +112,9 @@ window.Advisor = (function () {
         id: 'enrol',
         gain: e.unmanagedAtPeak,
         title: `Enrol the ${freeCars} charge point${freeCars > 1 ? 's' : ''} not yet under control`,
-        why: `${freeCars} of ${e.totalCars} cars charged outside the scheme and were drawing ` +
-             `${e.unmanagedAtPeak.toFixed(1)} kW at the worst moment. The controller cannot hold a limit ` +
-             `it is not allowed to act on, so today the cap is an aspiration. Enrolling them does not remove ` +
-             `the demand — it makes it schedulable, and the cap becomes something the controller can actually ` +
-             `guarantee.`,
+        why: `${freeCars} of ${e.totalCars} cars charged outside the scheme, drawing `
+             + `${e.unmanagedAtPeak.toFixed(1)} kW at the worst moment. The controller cannot hold a limit it `
+             + `is not allowed to act on.`,
         projKW,
         projLabel: `at or under the ${pct(A.policy.cap)}% cap — guaranteed, not estimated`,
         cost: 'No capital cost. Needs customer consent, so days not minutes.',
@@ -135,9 +133,8 @@ window.Advisor = (function () {
       opts.push({
         id: 'cap90',
         title: `Hold the managed cap at ${pct(newCap)}% of nameplate through the evening`,
-        why: `Worst load seen was ${e.peakPct}% of the safe limit across ${f.seen} evening` +
-             `${f.seen > 1 ? 's' : ''}. A tighter cap buys thermal margin tonight while a longer-term ` +
-             `fix is arranged.`,
+        why: `Worst load seen was ${e.peakPct}% of the safe limit. A tighter cap buys margin now, while a `
+             + `longer-term fix is arranged.`,
         projKW,
         projLabel: `peak ${Math.round((projKW / LIMIT) * 100)}% of the safe limit`,
         cost: 'Free, immediate and reversible.',
@@ -168,11 +165,10 @@ window.Advisor = (function () {
         gain: 0,
         title: 'Log the unit for thermal inspection and a reinforcement study',
         why: (f.breached
-                ? `${f.breached} of ${f.seen} observed evening${f.seen > 1 ? 's' : ''} went over the limit. `
-                : `No evening has tripped the limit yet, but the worst load seen was ${f.worst}% of it, ` +
-                  `which leaves nothing in reserve for a hot week or one extra car. `) +
-             `Sustained loading near the limit consumes insulation life whether or not anything trips, and ` +
-             `that loss is cumulative and invisible from the load trace alone.`,
+                ? `${f.breached} of ${f.seen} run${f.seen > 1 ? 's' : ''} went over the limit. `
+                : `Nothing has tripped yet, but the worst load was ${f.worst}% of the limit. `) +
+             `Sustained loading consumes insulation life whether or not anything trips, and that loss is `
+             + `invisible from the load trace.`,
         projKW: null,
         projLabel: 'no effect tonight',
         cost: 'Capital expenditure, and weeks of lead time.',
